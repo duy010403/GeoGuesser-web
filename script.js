@@ -284,6 +284,7 @@ function adminLogin() {
       loadAdminGuesses();
     })
     .catch(() => alert('Sai thông tin đăng nhập!'));
+    loadGroupedGuesses();
 }
 
 
@@ -321,6 +322,76 @@ function loadAdminGuesses() {
       body.appendChild(row);
     });
     document.getElementById("adminGuessesContainer").style.display = 'block';
+  });
+}
+function loadGroupedGuesses() {
+  db.ref("guesses").orderByChild("timestamp").once("value", snapshot => {
+    const allGuesses = Object.values(snapshot.val() || {});
+    const grouped = {};
+
+    // Nhóm theo ngày và độ khó
+    allGuesses.forEach(g => {
+      const dateStr = new Date(g.timestamp).toLocaleDateString('vi-VN'); // VD: 26/6/2025
+      if (!grouped[dateStr]) grouped[dateStr] = { easy: [], medium: [], hard: [] };
+      grouped[dateStr][g.difficulty].push(g);
+    });
+
+    const container = document.getElementById("adminHistoryGrouped");
+    container.innerHTML = '';
+
+    Object.keys(grouped).sort((a, b) => {
+      const [d1, m1, y1] = a.split('/').map(Number);
+      const [d2, m2, y2] = b.split('/').map(Number);
+      return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
+    }).forEach(date => {
+      const daySection = document.createElement("div");
+      daySection.innerHTML = `<h3 style="margin-top:30px;">📅 Ngày: ${date}</h3>`;
+
+      ["easy", "medium", "hard"].forEach(level => {
+        const data = grouped[date][level];
+        if (data.length === 0) return;
+
+        const title = {
+          easy: "🟢 Dễ",
+          medium: "🟡 Trung bình",
+          hard: "🔴 Khó"
+        }[level];
+
+        const table = document.createElement("table");
+        table.border = 1;
+        table.style.cssText = "width:100%; border-collapse: collapse; margin-top:10px; text-align:center;";
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>👤 Tên</th>
+              <th>${title}</th>
+              <th>📍 Tọa độ thật</th>
+              <th>❓ Tọa độ đoán</th>
+              <th>📏 Khoảng cách (km)</th>
+              <th>🕒 Thời gian</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(g => `
+              <tr>
+                <td>${g.name}</td>
+                <td>${level}</td>
+                <td>${g.actualLat.toFixed(4)}, ${g.actualLng.toFixed(4)}</td>
+                <td>${g.guessLat.toFixed(4)}, ${g.guessLng.toFixed(4)}</td>
+                <td>${g.distance.toFixed(2)}</td>
+                <td>${new Date(g.timestamp).toLocaleTimeString('vi-VN')}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        `;
+
+        daySection.appendChild(table);
+      });
+
+      container.appendChild(daySection);
+    });
+
+    container.style.display = 'block';
   });
 }
 
