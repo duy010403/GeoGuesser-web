@@ -1,7 +1,7 @@
 export default function handler(req, res) {
   const allowedOrigins = [
-    "https://duy010403.github.io",       // GitHub Pages
-    "https://your-vercel-project.vercel.app"  // Vercel (nếu có)
+    "https://duy010403.github.io",                   // GitHub Pages
+    "https://geo-guesser-web.vercel.app"             // Vercel production domain thật sự
   ];
   const origin = req.headers.origin || "";
 
