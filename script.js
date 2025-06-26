@@ -119,60 +119,6 @@ async function generateNewLocation(level) {
 }
 
 
-
-    function tryFindPanorama() {
-    tries++;
-    let coord;
-    let searchRadius;
-
-    if (level === 'easy') {
-      searchRadius = 10000;
-      coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
-    } else if (level === 'medium') {
-      // Asia: lat 10 to 60, lng 60 to 150
-      coord = {
-        lat: 10 + Math.random() * 50,
-        lng: 60 + Math.random() * 90
-      };
-      searchRadius = 50000;
-    } else {
-      // Global
-      coord = {
-        lat: -85 + Math.random() * 170,
-        lng: -180 + Math.random() * 360
-      };
-      searchRadius = 100000;
-    }
-
-    streetViewService.getPanorama({ location: coord, radius: searchRadius }, (data, status) => {
-      if (status === google.maps.StreetViewStatus.OK) {
-        actualLocation = data.location.latLng;
-        new google.maps.StreetViewPanorama(document.getElementById("mapPreview"), {
-  position: actualLocation,
-  pov: { heading: 165, pitch: 0 },
-  zoom: 1,
-  addressControl: false,
-  showRoadLabels: false,
-  linksControl: false,
-  panControl: false,
-  enableCloseButton: false
-});
-
-        document.getElementById('showGuessMapBtn').style.display = 'inline-block';
-        document.getElementById('submitGuessBtn').style.display = 'none';
-        document.getElementById('guessMapContainer').style.display = 'none';
-        guessLocation = null;
-      } else {
-        if (tries < maxTries) tryFindPanorama();
-        else alert("Không tìm thấy vị trí hợp lệ.");
-      }
-    });
-  }
-
-  tryFindPanorama();
-
-
-
 function showGuessMap() {
   document.getElementById('guessMapContainer').style.display = 'block';
   document.getElementById('showGuessMapBtn').style.display = 'none';
@@ -196,11 +142,10 @@ function showGuessMap() {
 }
 
 function submitGuess() {
+  const btn = document.getElementById('submitGuessBtn');
+  if (btn.disabled) return; // tránh gọi lại nhiều lần
   if (!guessLocation || !actualLocation) return alert("Vui lòng chọn vị trí!");
-
-  // ✅ Disable nút để tránh click lại
-  document.getElementById('submitGuessBtn').disabled = true;
-
+  btn.disabled = true;
   const distance = haversineDistance(
     { lat: actualLocation.lat(), lng: actualLocation.lng() },
     guessLocation
@@ -241,8 +186,6 @@ function submitGuess() {
   db.ref("guesses").push(guessData);
 }
 
-
-db.ref("guesses").push(guessData);
 
 
 
