@@ -118,8 +118,8 @@
     window.auth = firebase.auth();
   </script>
 
-  <script>
-  fetch('/api/mapkey')
+ <script>
+  fetch('https://geo-guesser-web.vercel.app/api/mapkey')
     .then(res => res.json())
     .then(data => {
       const script = document.createElement('script');
@@ -129,6 +129,8 @@
       document.head.appendChild(script);
     });
 </script>
+
+<script src="script.js"></script>
 
 </body>
 </html>
