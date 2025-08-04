@@ -25,18 +25,6 @@ let actualLocation, guessLocation;
 let guessMap;
 let streetViewService;
 
-<<<<<<< HEAD
-// NEW: Silent AI Vision Analysis with Real OCR & YOLO
-let visionAnalyzer = null;
-let preloadedLocations = {
-  easy: [],
-  medium: [],
-  hard: []
-};
-let isPreloading = false;
-
-=======
->>>>>>> 169a7d2 (Updated)
 // UI refs
 const authContainer = document.getElementById("authContainer");
 const difficultyContainer = document.getElementById("difficultyContainer");
@@ -48,582 +36,6 @@ const currentDifficultyBadge = document.getElementById("currentDifficultyBadge")
 const authMessage = document.getElementById("authMessage");
 const loggedInInfo = document.getElementById("loggedInInfo");
 
-<<<<<<< HEAD
-// NEW: Silent Vision Analysis Service with Real Tesseract OCR & YOLO
-class SilentVisionAnalyzer {
-  constructor() {
-    this.isInitialized = false;
-    this.ocrWorker = null;
-    this.yoloModel = null;
-    this.isOCRReady = false;
-    this.isYOLOReady = false;
-    this.initPromise = null;
-    this.analysisCache = new Map();
-  }
-
-  async initialize() {
-    if (this.initPromise) return this.initPromise;
-    if (this.isInitialized) return;
-    
-    this.initPromise = this.performSilentInitialization();
-    return this.initPromise;
-  }
-
-  async performSilentInitialization() {
-    try {
-      // Initialize both OCR and YOLO silently in parallel
-      await Promise.allSettled([
-        this.initializeOCRSilently(),
-        this.initializeYOLOSilently()
-      ]);
-      
-      this.isInitialized = this.isOCRReady || this.isYOLOReady; // At least one should work
-      
-    } catch (error) {
-      this.isInitialized = false;
-    }
-  }
-
-  async initializeOCRSilently() {
-    try {
-      // Load Tesseract.js if not already loaded
-      if (typeof Tesseract === 'undefined') {
-        await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.0/dist/tesseract.min.js');
-      }
-      
-      // Create OCR worker with silent configuration
-      this.ocrWorker = await Tesseract.createWorker(['eng', 'vie'], 1, {
-        logger: () => {}, // Completely silent
-        errorHandler: () => {} // Silent error handling
-      });
-      
-      // Optimize OCR for street signs and text recognition
-      await this.ocrWorker.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .-/ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼẾỀỂưăạảấầẩẫậắằẳẵặẹẻẽếềể',
-        tessedit_pageseg_mode: '6', // Single uniform block
-        preserve_interword_spaces: '1',
-        tessedit_do_invert: '0'
-      });
-      
-      this.isOCRReady = true;
-      
-    } catch (error) {
-      this.isOCRReady = false;
-    }
-  }
-
-  async initializeYOLOSilently() {
-  try {
-    if (typeof tf === 'undefined') {
-      await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
-    }
-    if (typeof cocoSsd === 'undefined') {
-      await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js');
-    }
-    this.yoloModel = await cocoSsd.load();
-    this.isYOLOReady = true;
-    console.log("✅ YOLO (coco-ssd) đã tải thành công");
-  } catch (error) {
-    console.error("❌ YOLO load error:", error);
-    this.isYOLOReady = false;
-  }
-}
-
-// Sửa lỗi getPanorama undefined: kiểm tra streetViewService trước khi dùng
-async findAndAnalyzeLocation(latlng, attempts = 0) {
-  return new Promise((resolve, reject) => {
-    if (!window.streetViewService) {
-      console.warn("⚠️ Google Maps chưa sẵn sàng, thử lại sau...");
-      return setTimeout(() => {
-        if (attempts < 5) {
-          resolve(this.findAndAnalyzeLocation(latlng, attempts + 1));
-        } else {
-          reject(new Error("streetViewService chưa sẵn sàng"));
-        }
-      }, 1000);
-    }
-
-    // Khi streetViewService đã sẵn sàng
-    window.streetViewService.getPanorama({ location: latlng, radius: 100 }, async (data, status) => {
-      if (status === google.maps.StreetViewStatus.OK) {
-        const analysis = await visionAnalyzer.analyzeStreetViewImage(data);
-        resolve(analysis);
-      } else {
-        reject(new Error("Không tìm thấy panorama"));
-      }
-    });
-  });
-}
-
-
-  async loadScriptSilently(src) {
-    return new Promise((resolve) => {
-      if (document.querySelector(`script[src="${src}"]`)) {
-        resolve();
-        return;
-      }
-      
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = resolve; // Don't reject, just continue
-      script.async = true;
-      document.head.appendChild(script);
-    });
-  }
-
- async analyzeStreetViewImage(panoData) {
-  if (!this.isInitialized) {
-    return this.fallbackAnalysis(panoData);
-  }
-
-  // Check cache first
-  const cacheKey = panoData.location?.pano;
-  if (cacheKey && this.analysisCache.has(cacheKey)) {
-    return this.analysisCache.get(cacheKey);
-  }
-
-  try {
-    const imageCanvas = await this.captureStreetViewImageSilently(panoData);
-    if (!imageCanvas) {
-      return this.fallbackAnalysis(panoData);
-    }
-
-    // Run OCR and YOLO analysis silently in parallel
-    const [ocrResult, yoloResult] = await Promise.allSettled([
-      this.runSilentOCR(imageCanvas),
-      this.runSilentYOLO(imageCanvas)
-    ]);
-
-    // ✅ Log kết quả OCR để kiểm tra
-    if (ocrResult.status === 'fulfilled' && ocrResult.value?.text) {
-      console.log("🔹 OCR kết quả:", ocrResult.value.text);
-
-      // Hiển thị lên UI để dễ quan sát
-      const resultEl = document.getElementById('result');
-      if (resultEl) {
-        resultEl.textContent = "🔹 OCR: " + 
-          ocrResult.value.text.slice(0, 100) + // chỉ hiển thị 100 ký tự đầu
-          (ocrResult.value.text.length > 100 ? "..." : "");
-        resultEl.classList.remove('hidden');
-      }
-    } else {
-      console.warn("⚠️ OCR không có kết quả hoặc thất bại");
-    }
-
-    const analysis = this.combineAnalysisResults(
-      ocrResult.status === 'fulfilled' ? ocrResult.value : null,
-      yoloResult.status === 'fulfilled' ? yoloResult.value : null,
-      panoData
-    );
-
-    // Cache the result
-    if (cacheKey) {
-      this.analysisCache.set(cacheKey, analysis);
-    }
-
-    return analysis;
-
-  } catch (error) {
-    console.error("❌ Lỗi khi phân tích Street View:", error);
-    return this.fallbackAnalysis(panoData);
-  }
-}
-
-
-  async captureStreetViewImageSilently(panoData) {
-    try {
-      // Create hidden canvas for image capture
-      const canvas = document.createElement('canvas');
-      canvas.width = 640;
-      canvas.height = 480;
-      canvas.style.position = 'absolute';
-      canvas.style.left = '-9999px';
-      canvas.style.top = '-9999px';
-      canvas.style.visibility = 'hidden';
-      document.body.appendChild(canvas);
-
-      // Create temporary Street View panorama
-      const tempDiv = document.createElement('div');
-      tempDiv.style.width = '640px';
-      tempDiv.style.height = '480px';
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.visibility = 'hidden';
-      document.body.appendChild(tempDiv);
-
-      const tempPano = new google.maps.StreetViewPanorama(tempDiv, {
-        position: panoData.location.latLng,
-        pov: { heading: 0, pitch: 0 },
-        zoom: 1,
-        addressControl: false,
-        linksControl: false,
-        panControl: false,
-        zoomControl: false,
-        fullscreenControl: false,
-        motionTracking: false,
-        motionTrackingControl: false,
-        visible: false
-      });
-
-      // Wait for panorama to load
-      await new Promise((resolve) => {
-        const timeout = setTimeout(resolve, 2000); // Max 2 seconds
-        tempPano.addListener('pano_changed', () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-      });
-
-      // Capture multiple angles for better analysis
-      const ctx = canvas.getContext('2d');
-      const angles = [0, 90, 180, 270]; // 4 directions
-      let bestImage = null;
-      
-      for (const angle of angles) {
-        tempPano.setPov({ heading: angle, pitch: 0 });
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Create image from Street View
-        const imageData = ctx.createImageData(canvas.width, canvas.height);
-        ctx.putImageData(imageData, 0, 0);
-        
-        if (!bestImage) bestImage = canvas;
-      }
-
-      // Clean up
-      document.body.removeChild(canvas);
-      document.body.removeChild(tempDiv);
-      
-      return bestImage;
-
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async runSilentOCR(canvas) {
-    if (!this.isOCRReady || !this.ocrWorker) {
-      return { confidence: 0, text: '', words: [], lines: [] };
-    }
-
-    try {
-      // Use recognize with timeout
-      const ocrPromise = this.ocrWorker.recognize(canvas);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('OCR timeout')), 5000)
-      );
-      
-      const { data } = await Promise.race([ocrPromise, timeoutPromise]);
-      
-      return {
-        confidence: data.confidence || 0,
-        text: data.text || '',
-        words: data.words || [],
-        lines: data.lines || []
-      };
-
-    } catch (error) {
-      return { confidence: 0, text: '', words: [], lines: [] };
-    }
-  }
-
-  async runSilentYOLO(canvas) {
-    if (!this.isYOLOReady || !this.yoloModel) {
-      return [];
-    }
-
-    try {
-      // Use detect with timeout
-      const yoloPromise = this.yoloModel.detect(canvas, 10); // Max 10 predictions
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('YOLO timeout')), 3000)
-      );
-      
-      const predictions = await Promise.race([yoloPromise, timeoutPromise]);
-      return predictions || [];
-
-    } catch (error) {
-      return [];
-    }
-  }
-
-  combineAnalysisResults(ocrData, yoloData, panoData) {
-    const analysis = {
-      // OCR-based features (text analysis)
-      hasStreetSigns: false,
-      hasStreetNames: false,
-      hasBusinessSigns: false,
-      hasNumberPlates: false,
-      hasDirectionalSigns: false,
-      textDensity: 0,
-      textConfidence: 0,
-      readableTextCount: 0,
-      
-      // YOLO-based features (object detection)
-      hasVehicles: false,
-      hasBuildings: false,
-      hasPeople: false,
-      hasTrafficLights: false,
-      hasStopSigns: false,
-      hasMotorcycles: false,
-      hasBuses: false,
-      
-      // Combined analysis
-      isUrban: false,
-      difficultyScore: 0,
-      identifiableFeatures: 0,
-      confidenceLevel: 0
-    };
-
-    // Process OCR results for detailed text analysis
-    if (ocrData && ocrData.confidence > 20) {
-      analysis.textConfidence = ocrData.confidence;
-      analysis.readableTextCount = ocrData.words.filter(w => w.confidence > 60).length;
-      analysis.textDensity = Math.min(analysis.readableTextCount / 30, 1);
-      
-      const fullText = ocrData.text.toLowerCase();
-      const highConfidenceText = ocrData.words
-        .filter(w => w.confidence > 70)
-        .map(w => w.text.toLowerCase())
-        .join(' ');
-      
-      // Enhanced street sign detection
-      analysis.hasStreetSigns = /street|road|avenue|boulevard|lane|drive|way|st\.|rd\.|ave\.|blvd\.|đường|phố|lộ|hẻm/.test(fullText) ||
-                                /exit|entrance|one way|no entry|speed limit|\d+\s*mph|\d+\s*km\/h/.test(fullText);
-      
-      // Street name detection (specific patterns)
-      analysis.hasStreetNames = /\b[A-Z][a-zA-Z]+ (street|road|avenue|st|rd|ave|đường|phố)\b/i.test(ocrData.text) ||
-                               /\b(đường|phố|lộ) [A-Z][a-zA-Z]+/i.test(ocrData.text);
-      
-      // Business sign detection (comprehensive)
-      analysis.hasBusinessSigns = /shop|store|market|cafe|restaurant|hotel|bank|mall|center|company|office|pharmacy|hospital|school|university/.test(fullText) ||
-                                 /cửa hàng|nhà hàng|khách sạn|ngân hàng|trung tâm|công ty|văn phòng|bệnh viện|trường/.test(fullText);
-      
-      // Number plate and vehicle ID detection
-      analysis.hasNumberPlates = /\b\d{2,4}[A-Z]{1,3}\d{0,4}\b|\b[A-Z]{1,3}\d{2,4}[A-Z]?\b/.test(ocrData.text);
-      
-      // Directional and informational signs
-      analysis.hasDirectionalSigns = /north|south|east|west|left|right|ahead|exit|entrance|↑|↓|←|→/.test(fullText) ||
-                                    /bắc|nam|đông|tây|trái|phải|thẳng|lối ra|lối vào/.test(fullText);
-    }
-
-    // Process YOLO results for object detection
-    if (yoloData && yoloData.length > 0) {
-      const objectCounts = {};
-      yoloData.forEach(pred => {
-        if (pred.score > 0.3) { // Only high-confidence predictions
-          const className = pred.class.toLowerCase();
-          objectCounts[className] = (objectCounts[className] || 0) + 1;
-          
-          // Vehicle detection
-          if (['car', 'truck', 'bus'].includes(className)) {
-            analysis.hasVehicles = true;
-            if (className === 'bus') analysis.hasBuses = true;
-          }
-          if (['motorcycle', 'bicycle'].includes(className)) {
-            analysis.hasMotorcycles = true;
-            analysis.hasVehicles = true;
-          }
-          
-          // People detection
-          if (['person'].includes(className)) {
-            analysis.hasPeople = true;
-          }
-          
-          // Traffic infrastructure
-          if (['traffic light'].includes(className)) {
-            analysis.hasTrafficLights = true;
-          }
-          if (['stop sign'].includes(className)) {
-            analysis.hasStopSigns = true;
-          }
-        }
-      });
-      
-      // Infer buildings from object density and context
-      const totalObjects = yoloData.length;
-      analysis.hasBuildings = totalObjects > 5 || analysis.hasBusinessSigns || analysis.hasTrafficLights;
-    }
-
-    // Combine with panorama metadata
-    const links = panoData.links || [];
-    const linkCount = links.length;
-    
-    // Enhanced urban classification
-    analysis.isUrban = (
-      linkCount >= 3 || 
-      analysis.hasStreetSigns || 
-      analysis.hasTrafficLights ||
-      analysis.hasBusinessSigns ||
-      (analysis.hasVehicles && analysis.textDensity > 0.2) ||
-      analysis.readableTextCount > 10
-    );
-
-    // Count all identifiable features
-    analysis.identifiableFeatures = [
-      analysis.hasStreetSigns,
-      analysis.hasStreetNames,
-      analysis.hasBusinessSigns,
-      analysis.hasNumberPlates,
-      analysis.hasDirectionalSigns,
-      analysis.hasVehicles,
-      analysis.hasBuildings,
-      analysis.hasTrafficLights,
-      analysis.hasStopSigns,
-      analysis.hasPeople,
-      analysis.textDensity > 0.3,
-      linkCount >= 3
-    ].filter(Boolean).length;
-
-    // Calculate comprehensive difficulty score
-    analysis.difficultyScore = this.calculateEnhancedDifficultyScore(analysis, linkCount);
-    
-    // Calculate overall confidence level
-    analysis.confidenceLevel = this.calculateConfidenceLevel(analysis, ocrData, yoloData);
-
-    return analysis;
-  }
-
-  calculateEnhancedDifficultyScore(analysis, linkCount) {
-    let score = 0;
-    
-    // EASY indicators (high identifiability = easier)
-    if (analysis.hasStreetNames) score += 30;
-    if (analysis.hasStreetSigns) score += 25;
-    if (analysis.hasBusinessSigns) score += 20;
-    if (analysis.hasDirectionalSigns) score += 15;
-    if (analysis.hasNumberPlates) score += 15;
-    if (analysis.hasTrafficLights) score += 10;
-    if (analysis.textDensity > 0.5) score += 25;
-    if (analysis.textConfidence > 70) score += 20;
-    if (analysis.identifiableFeatures >= 6) score += 30;
-    if (linkCount >= 4) score += 15;
-    if (analysis.readableTextCount > 15) score += 20;
-    
-    // MEDIUM indicators (some identifiable features)
-    if (analysis.hasVehicles && !analysis.hasStreetNames) score += 35;
-    if (analysis.hasBuildings && !analysis.hasBusinessSigns) score += 30;
-    if (analysis.hasPeople && analysis.textDensity < 0.3) score += 25;
-    if (analysis.isUrban && analysis.identifiableFeatures < 4) score += 40;
-    if (linkCount === 2 || linkCount === 3) score += 25;
-    if (analysis.textDensity > 0.2 && analysis.textDensity < 0.5) score += 30;
-    
-    // HARD indicators (low identifiability = harder)
-    if (analysis.identifiableFeatures <= 2) score += 80;
-    if (!analysis.isUrban) score += 70;
-    if (linkCount <= 1) score += 60;
-    if (analysis.textDensity < 0.1) score += 50;
-    if (!analysis.hasVehicles && !analysis.hasBuildings && !analysis.hasPeople) score += 40;
-    if (analysis.textConfidence < 30) score += 35;
-    if (analysis.readableTextCount < 3) score += 30;
-    
-    return Math.min(Math.max(score, 0), 100);
-  }
-
-  calculateConfidenceLevel(analysis, ocrData, yoloData) {
-    let confidence = 0;
-    
-    // OCR confidence contribution
-    if (ocrData && this.isOCRReady) {
-      confidence += (ocrData.confidence / 100) * 0.4;
-    }
-    
-    // YOLO confidence contribution
-    if (yoloData && this.isYOLOReady && yoloData.length > 0) {
-      const avgYoloConfidence = yoloData.reduce((sum, pred) => sum + pred.score, 0) / yoloData.length;
-      confidence += avgYoloConfidence * 0.3;
-    }
-    
-    // Feature detection confidence
-    confidence += (analysis.identifiableFeatures / 12) * 0.3;
-    
-    return Math.min(confidence, 1);
-  }
-
-  fallbackAnalysis(panoData) {
-    const links = panoData?.links || [];
-    const linkCount = links.length;
-    
-    return {
-      hasStreetSigns: linkCount >= 2 && Math.random() > 0.5,
-      hasStreetNames: linkCount >= 3 && Math.random() > 0.7,
-      hasBusinessSigns: linkCount >= 3 && Math.random() > 0.6,
-      hasVehicles: Math.random() > 0.5,
-      hasBuildings: linkCount >= 2,
-      hasNumberPlates: Math.random() > 0.8,
-      hasDirectionalSigns: linkCount >= 2 && Math.random() > 0.6,
-      textDensity: Math.min(linkCount / 8, 1),
-      textConfidence: 30 + Math.random() * 40,
-      isUrban: linkCount >= 3,
-      identifiableFeatures: Math.min(linkCount + Math.floor(Math.random() * 3), 8),
-      difficultyScore: this.getFallbackDifficultyScore(linkCount),
-      confidenceLevel: 0.3
-    };
-  }
-
-  getFallbackDifficultyScore(linkCount) {
-    if (linkCount <= 1) return 70 + Math.random() * 25;
-    if (linkCount >= 4) return 15 + Math.random() * 40;
-    return 35 + Math.random() * 35;
-  }
-
-  // Check if location meets difficulty requirements
-  isLocationSuitableForDifficulty(analysis, level) {
-    switch(level) {
-      case 'easy':
-        // Easy: Bán kính 10km, có biển báo/tên đường/toà nhà cụ thể
-        return (
-          (analysis.hasStreetSigns || analysis.hasStreetNames) &&
-          (analysis.hasBusinessSigns || analysis.hasBuildings) &&
-          analysis.isUrban &&
-          analysis.identifiableFeatures >= 4 &&
-          analysis.difficultyScore >= 60
-        );
-        
-      case 'medium':
-        // Medium: Châu Á, có ít nhất một điều kiện ngẫu nhiên
-        return (
-          (analysis.hasVehicles || analysis.hasBuildings || analysis.hasStreetSigns || analysis.hasPeople) &&
-          analysis.identifiableFeatures >= 2 &&
-          analysis.difficultyScore >= 25 &&
-          analysis.difficultyScore <= 75
-        );
-        
-      case 'hard':
-        // Hard: Toàn cầu, ít thông tin nhận dạng
-        return (
-          analysis.identifiableFeatures <= 3 &&
-          analysis.difficultyScore <= 50
-        );
-        
-      default:
-        return true;
-    }
-  }
-
-  // Clean up resources
-  async terminate() {
-    try {
-      if (this.ocrWorker) {
-        await this.ocrWorker.terminate();
-        this.ocrWorker = null;
-      }
-    } catch (error) {
-      // Silent cleanup
-    }
-    
-    this.yoloModel = null;
-    this.isInitialized = false;
-    this.isOCRReady = false;
-    this.isYOLOReady = false;
-    this.analysisCache.clear();
-  }
-}
-
-=======
->>>>>>> 169a7d2 (Updated)
 // Init map service
 window.initMap = () => {
   streetViewService = new google.maps.StreetViewService();
@@ -696,25 +108,11 @@ auth.onAuthStateChanged(async (user) => {
   }
 });
 
-<<<<<<< HEAD
-// UPDATED: Function chính để xử lý sau khi đăng nhập
-=======
 // Function chính để xử lý sau khi đăng nhập
->>>>>>> 169a7d2 (Updated)
 async function postLoginSetup(user) {
   try {
     authContainer.classList.add("hidden");
     
-<<<<<<< HEAD
-    // NEW: Initialize silent AI vision analyzer in background
-    if (!visionAnalyzer) {
-      visionAnalyzer = new SilentVisionAnalyzer();
-      // Start initialization silently - don't wait for it
-      visionAnalyzer.initialize().catch(() => {});
-    }
-    
-=======
->>>>>>> 169a7d2 (Updated)
     const hasDisplayName = await checkUserDisplayName(user);
     
     if (hasDisplayName) {
@@ -956,11 +354,7 @@ function logoutUser() {
   });
 }
 
-<<<<<<< HEAD
-// UPDATED: Game difficulty with AI preloading
-=======
 // Game logic
->>>>>>> 169a7d2 (Updated)
 function setGameDifficulty(level) {
   currentDifficulty = level;
   if (currentDifficultyBadge) {
@@ -970,22 +364,9 @@ function setGameDifficulty(level) {
     else if (level === 'medium') currentDifficultyBadge.classList.add("yellow");
     else if (level === 'hard') currentDifficultyBadge.classList.add("red");
   }
-<<<<<<< HEAD
-  
-  // NEW: Start silent preloading for selected difficulty
-  if (visionAnalyzer && visionAnalyzer.isInitialized) {
-    getUserLocation().then(userLocation => {
-      silentPreloadLocations(level, userLocation);
-    });
-  }
-}
-
-// UPDATED: Start game with AI
-=======
 }
 
 
->>>>>>> 169a7d2 (Updated)
 function startGame() {
   if (!playerName) {
     alert("Vui lòng đăng nhập trước.");
@@ -993,235 +374,12 @@ function startGame() {
   }
   difficultyContainer.classList.add("hidden");
   gameContainer.classList.remove("hidden");
-<<<<<<< HEAD
-  
-  // NEW: Use AI-enhanced location generation
-  if (visionAnalyzer && visionAnalyzer.isInitialized) {
-    generateNewLocationWithAI(currentDifficulty);
-  } else {
-    // Fallback to original method
-    generateNewLocation(currentDifficulty);
-  }
-}
-
-// NEW: AI-enhanced location generation
-async function generateNewLocationWithAI(level) {
-  const userLocation = await getUserLocation();
-  
-  // If we have preloaded locations for this difficulty, use them
-  if (preloadedLocations[level].length > 0) {
-    const selectedLocation = preloadedLocations[level].shift();
-    displayLocation(selectedLocation);
-    
-    // Preload more locations in background
-    silentPreloadLocations(level, userLocation);
-    return;
-  }
-  
-  // Otherwise, find and analyze locations
-  await findAndAnalyzeLocation(level, userLocation);
-}
-
-// NEW: Silent background preloading
-async function silentPreloadLocations(level, userLocation) {
-  if (isPreloading) return;
-  isPreloading = true;
-  
-  try {
-    const locationsNeeded = 3 - preloadedLocations[level].length;
-    const promises = [];
-    
-    for (let i = 0; i < Math.min(locationsNeeded, 2); i++) {
-      promises.push(findAndAnalyzeLocation(level, userLocation, true));
-    }
-    
-    const results = await Promise.allSettled(promises);
-    results.forEach(result => {
-      if (result.status === 'fulfilled' && result.value) {
-        preloadedLocations[level].push(result.value);
-      }
-    });
-  } catch (error) {
-    console.warn('Silent preload error:', error);
-  } finally {
-    isPreloading = false;
-  }
-}
-
-// NEW: Find and analyze location with AI
-async function findAndAnalyzeLocation(level, userLocation, isPreloading = false) {
-  const maxTries = 12;
-  let tries = 0;
-  
-  async function tryFind() {
-    tries++;
-    
-    const coord = generateCoordinateForLevel(level, userLocation, tries);
-    const searchRadius = getSearchRadiusForLevel(level);
-    
-    return new Promise((resolve) => {
-      streetViewService.getPanorama({ 
-        location: coord, 
-        radius: searchRadius,
-        source: google.maps.StreetViewSource.OUTDOOR
-      }, async (data, status) => {
-        
-        if (status === google.maps.StreetViewStatus.OK) {
-          // NEW: Silent AI analysis
-          const analysis = await visionAnalyzer.analyzeStreetViewImage(data);
-
-          
-          // Check if location matches difficulty requirements
-          if (isLocationSuitableForDifficulty(analysis, level)) {
-            const locationData = {
-              position: data.location.latLng,
-              panoId: data.location.pano,
-              analysis: analysis,
-              difficulty: level,
-              data: data
-            };
-            
-            if (isPreloading) {
-              resolve(locationData);
-            } else {
-              displayLocation(locationData);
-              resolve(true);
-            }
-            return;
-          }
-        }
-        
-        // Try again if not suitable or failed
-        if (tries < maxTries) {
-          setTimeout(() => tryFind().then(resolve), 300);
-        } else {
-          // Fallback to original method
-          if (!isPreloading) {
-            generateNewLocation(level);
-          }
-          resolve(null);
-        }
-      });
-    });
-  }
-  
-  return tryFind();
-}
-
-// NEW: Check if location is suitable for difficulty level
-function isLocationSuitableForDifficulty(analysis, level) {
-  switch(level) {
-    case 'easy':
-      // Easy: Must have street signs/names and urban features
-      return (analysis.hasStreetSigns || analysis.hasStreetNames) && 
-             analysis.isUrban && 
-             analysis.difficultyScore >= 50;
-      
-    case 'medium':
-      // Medium: Should have some features but not too obvious
-      return (analysis.hasVehicles || analysis.hasBuildings) && 
-             analysis.difficultyScore >= 30 && 
-             analysis.difficultyScore <= 70;
-      
-    case 'hard':
-      // Hard: Minimal features, low urban score
-      return analysis.difficultyScore <= 40;
-      
-    default:
-      return true; // Fallback
-  }
-}
-
-// NEW: Generate coordinates based on difficulty level
-function generateCoordinateForLevel(level, userLocation, tries) {
-  switch(level) {
-    case 'easy':
-      // Easy: Within 10km of user
-      const radius = tries > 8 ? 15 : 10; // Expand if many tries
-      return getRandomNearbyCoords(userLocation, radius);
-      
-    case 'medium':
-      // Medium: Asia region
-      return {
-        lat: 10 + Math.random() * 50,    // 10°N to 60°N
-        lng: 60 + Math.random() * 90     // 60°E to 150°E
-      };
-      
-    case 'hard':
-      // Hard: Worldwide
-      return {
-        lat: -85 + Math.random() * 170,  // -85° to 85°
-        lng: -180 + Math.random() * 360  // -180° to 180°
-      };
-      
-    default:
-      return userLocation;
-  }
-}
-
-function getRandomNearbyCoords(center, radiusKm) {
-  const r = radiusKm / 111.32;
-  const u = Math.random(), v = Math.random();
-  const w = r * Math.sqrt(u), t = 2 * Math.PI * v;
-  const lat = w * Math.cos(t), lng = w * Math.sin(t) / Math.cos(center.lat * Math.PI / 180);
-  return { lat: center.lat + lat, lng: center.lng + lng };
-}
-
-function getSearchRadiusForLevel(level) {
-  switch(level) {
-    case 'easy': return 5000;
-    case 'medium': return 50000;
-    case 'hard': return 100000;
-    default: return 10000;
-  }
-}
-
-// NEW: Display the selected location
-function displayLocation(locationData) {
-  actualLocation = locationData.position;
-  
-  const panoramaOptions = {
-    position: actualLocation,
-    pov: { 
-      heading: Math.random() * 360,
-      pitch: -5 + Math.random() * 10
-    },
-    zoom: 1,
-    addressControl: false,
-    linksControl: true,
-    panControl: true,
-    zoomControl: true,
-    fullscreenControl: false,
-    motionTracking: false,
-    motionTrackingControl: false
-  };
-
-  new google.maps.StreetViewPanorama(
-    document.getElementById("mapPreview"), 
-    panoramaOptions
-  );
-
-  document.getElementById('showGuessMapBtn').classList.remove('hidden');
-  document.getElementById('submitGuessBtn').classList.add('hidden');
-  document.getElementById('guessMapContainer').style.display = 'none';
-  guessLocation = null;
-
-  if (guessMarker) guessMarker.setMap(null);
-  if (actualMarker) actualMarker.setMap(null);
-}
-
-// ORIGINAL: Keep original function as fallback
-async function generateNewLocation(level) {
-  const userLocation = await getUserLocation();
-  const maxTries = 20;
-=======
   generateNewLocation(currentDifficulty);
 }
 
 async function generateNewLocation(level) {
   const userLocation = await getUserLocation();
   const maxTries = 20; // Tăng số lần thử để tìm được panorama phù hợp
->>>>>>> 169a7d2 (Updated)
   let tries = 0;
 
   function getRandomNearbyCoords(center, radiusKm) {
@@ -1232,13 +390,6 @@ async function generateNewLocation(level) {
     return { lat: center.lat + lat, lng: center.lng + lng };
   }
 
-<<<<<<< HEAD
-  function isValidPanoramaForLevel(data, level) {
-    if (!data || !data.location) return false;
-    
-    const links = data.links || [];
-    const hasLinks = links.length > 0;
-=======
   // Hàm kiểm tra chất lượng panorama dựa trên metadata
   function isValidPanoramaForLevel(data, level) {
     if (!data || !data.location) return false;
@@ -1248,18 +399,10 @@ async function generateNewLocation(level) {
     const hasLinks = links.length > 0;
     
     // Kiểm tra có phải ảnh chụp từ đường phố không
->>>>>>> 169a7d2 (Updated)
     const isStreetLevel = data.location.pano && data.location.pano.length > 0;
     
     switch(level) {
       case 'easy':
-<<<<<<< HEAD
-        return hasLinks && links.length >= 2 && isStreetLevel;
-      case 'medium':
-        return hasLinks && links.length >= 1 && isStreetLevel;
-      case 'hard':
-        return isStreetLevel;
-=======
         // Dễ: Cần có nhiều links (nghĩa là ở đường phố có thể di chuyển)
         // và không phải ảnh chụp từ xe/máy bay (thường có ít links)
         return hasLinks && links.length >= 2 && isStreetLevel;
@@ -1272,7 +415,6 @@ async function generateNewLocation(level) {
         // Khó: Chấp nhận mọi loại panorama hợp lệ
         return isStreetLevel;
         
->>>>>>> 169a7d2 (Updated)
       default:
         return isStreetLevel;
     }
@@ -1284,13 +426,6 @@ async function generateNewLocation(level) {
     let searchRadius;
 
     if (level === 'easy') {
-<<<<<<< HEAD
-      searchRadius = 10000;
-      coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
-      
-      if (tries > 5) {
-        searchRadius = 5000;
-=======
       // Dễ: Trong vòng 10km, ưu tiên khu vực đô thị
       searchRadius = 10000;
       coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
@@ -1298,35 +433,22 @@ async function generateNewLocation(level) {
       // Thêm bias về phía trung tâm thành phố (giảm radius để tăng khả năng có đường phố)
       if (tries > 5) {
         searchRadius = 5000; // Thu nhỏ phạm vi nếu thử nhiều lần
->>>>>>> 169a7d2 (Updated)
         coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
       }
       
     } else if (level === 'medium') {
-<<<<<<< HEAD
-      coord = {
-        lat: 10 + Math.random() * 50,
-        lng: 60 + Math.random() * 90
-=======
       // Trung bình: Toàn châu Á
       coord = {
         lat: 10 + Math.random() * 50,    // Từ 10°N đến 60°N
         lng: 60 + Math.random() * 90     // Từ 60°E đến 150°E
->>>>>>> 169a7d2 (Updated)
       };
       searchRadius = 50000;
       
     } else {
-<<<<<<< HEAD
-      coord = {
-        lat: -85 + Math.random() * 170,
-        lng: -180 + Math.random() * 360
-=======
       // Khó: Toàn thế giới  
       coord = {
         lat: -85 + Math.random() * 170,  // Từ -85° đến 85°
         lng: -180 + Math.random() * 360  // Từ -180° đến 180°
->>>>>>> 169a7d2 (Updated)
       };
       searchRadius = 100000;
     }
