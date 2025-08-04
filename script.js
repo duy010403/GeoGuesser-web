@@ -13,7 +13,7 @@ firebase.initializeApp(firebaseConfig);
 window.db = firebase.database();
 window.auth = firebase.auth();
 
-// Admin email
+// Admin email 
 const ADMIN_EMAIL = "duyga154@gmail.com";
 
 // State
@@ -502,6 +502,35 @@ async function generateNewLocation(level) {
           document.getElementById("mapPreview"), 
           panoramaOptions
         );
+setTimeout(() => {
+  html2canvas(document.getElementById("mapPreview")).then(canvas => {
+    Tesseract.recognize(
+      canvas.toDataURL(), 'eng',
+      { logger: m => console.log("📖 OCR:", m) }
+    ).then(({ data: { text } }) => {
+      console.log("🔍 Text nhận dạng được:", text);
+
+      // Gợi ý: kiểm tra nếu có từ mang nghĩa địa chỉ
+      const addressKeywords = ['street', 'road', 'avenue', 'city', 'district', 'village', 'ward', 'thành phố', 'đường', 'phường', 'quận'];
+
+      const isLikelyAddress = addressKeywords.some(keyword =>
+        text.toLowerCase().includes(keyword)
+      );
+
+      if (isLikelyAddress) {
+        console.log("✅ Ảnh có khả năng chứa địa chỉ!");
+        // Optional: đánh dấu ảnh "dễ"
+      } else {
+        console.log("⚠️ Không phát hiện địa chỉ rõ ràng.");
+        // Optional: nếu đang ở easy level, thử lại ảnh khác
+        if (level === 'easy' && tries < maxTries) {
+          console.log("🔁 Đang thử ảnh khác vì không thấy địa chỉ.");
+          setTimeout(tryFindPanorama, 100);
+        }
+      }
+    });
+  });
+}, 3000); // Delay 3s để đợi ảnh load xong
 
         // Hiện button đoán vị trí
         document.getElementById('showGuessMapBtn').classList.remove('hidden');
