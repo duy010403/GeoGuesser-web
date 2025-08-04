@@ -110,17 +110,13 @@ class SilentVisionAnalyzer {
 
   async initializeYOLOSilently() {
   try {
-    // Load TensorFlow.js nếu chưa có
     if (typeof tf === 'undefined') {
       await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
     }
     if (typeof cocoSsd === 'undefined') {
       await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js');
     }
-
-    // ✅ Dùng cocoSsd.load() mặc định để tránh CORS tfhub.dev
     this.yoloModel = await cocoSsd.load();
-
     this.isYOLOReady = true;
     console.log("✅ YOLO (coco-ssd) đã tải thành công");
   } catch (error) {
@@ -128,6 +124,33 @@ class SilentVisionAnalyzer {
     this.isYOLOReady = false;
   }
 }
+
+// Sửa lỗi getPanorama undefined: kiểm tra streetViewService trước khi dùng
+async findAndAnalyzeLocation(latlng, attempts = 0) {
+  return new Promise((resolve, reject) => {
+    if (!window.streetViewService) {
+      console.warn("⚠️ Google Maps chưa sẵn sàng, thử lại sau...");
+      return setTimeout(() => {
+        if (attempts < 5) {
+          resolve(this.findAndAnalyzeLocation(latlng, attempts + 1));
+        } else {
+          reject(new Error("streetViewService chưa sẵn sàng"));
+        }
+      }, 1000);
+    }
+
+    // Khi streetViewService đã sẵn sàng
+    window.streetViewService.getPanorama({ location: latlng, radius: 100 }, async (data, status) => {
+      if (status === google.maps.StreetViewStatus.OK) {
+        const analysis = await visionAnalyzer.analyzeStreetViewImage(data);
+        resolve(analysis);
+      } else {
+        reject(new Error("Không tìm thấy panorama"));
+      }
+    });
+  });
+}
+
 
   async loadScriptSilently(src) {
     return new Promise((resolve) => {
