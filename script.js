@@ -502,6 +502,7 @@ async function generateNewLocation(level) {
           document.getElementById("mapPreview"), 
           panoramaOptions
         );
+        let foundValidOCR = false;
 setTimeout(() => {
   html2canvas(document.getElementById("mapPreview")).then(canvas => {
     Tesseract.recognize(
@@ -518,16 +519,16 @@ setTimeout(() => {
       );
 
       if (isLikelyAddress) {
-        console.log("✅ Ảnh có khả năng chứa địa chỉ!");
-        // Optional: đánh dấu ảnh "dễ"
-      } else {
-        console.log("⚠️ Không phát hiện địa chỉ rõ ràng.");
-        // Optional: nếu đang ở easy level, thử lại ảnh khác
-        if (level === 'easy' && tries < maxTries) {
-          console.log("🔁 Đang thử ảnh khác vì không thấy địa chỉ.");
-          setTimeout(tryFindPanorama, 100);
-        }
-      }
+  console.log("✅ Ảnh có khả năng chứa địa chỉ!");
+  foundValidOCR = true;  // <-- báo là ảnh này hợp lệ
+} else {
+  console.log("⚠️ Không phát hiện địa chỉ rõ ràng.");
+  if (!foundValidOCR && level === 'easy' && tries < maxTries) {
+    console.log("🔁 Đang thử ảnh khác vì không thấy địa chỉ.");
+    setTimeout(tryFindPanorama, 100);
+  }
+}
+
     });
   });
 }, 3000); // Delay 3s để đợi ảnh load xong
