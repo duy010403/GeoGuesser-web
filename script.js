@@ -473,7 +473,7 @@ async function generateNewLocation(level) {
 
     console.log(`🔍 Thử lần ${tries}/${maxTries} - Tọa độ: ${coord.lat.toFixed(4)}, ${coord.lng.toFixed(4)}`);
 
-    streetViewService.getPanorama({
+   streetViewService.getPanorama({
   location: coord,
   radius: searchRadius,
   source: google.maps.StreetViewSource.OUTDOOR
@@ -533,6 +533,8 @@ async function generateNewLocation(level) {
     }
   }
 });
+
+}
 
   // Bắt đầu tìm panorama
   console.log(`🎯 Bắt đầu tìm panorama cho độ khó: ${level.toUpperCase()}`);
@@ -890,5 +892,5 @@ function loadGroupedGuesses() {
 
     container.style.display = 'block';
   });
-}}
+}
 
