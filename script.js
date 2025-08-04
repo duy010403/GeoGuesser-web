@@ -109,27 +109,25 @@ class SilentVisionAnalyzer {
   }
 
   async initializeYOLOSilently() {
-    try {
-      // Load TensorFlow.js and COCO-SSD silently
-      if (typeof tf === 'undefined') {
-        await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
-      }
-      if (typeof cocoSsd === 'undefined') {
-        await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js');
-      }
-      
-      // Load COCO-SSD model silently
-      this.yoloModel = await cocoSsd.load({
-        modelUrl: 'https://tfhub.dev/tensorflow/tfjs-model/ssd_mobilenet_v2/1/default/1',
-        base: 'mobilenet_v2'
-      });
-      
-      this.isYOLOReady = true;
-      
-    } catch (error) {
-      this.isYOLOReady = false;
+  try {
+    // Load TensorFlow.js nếu chưa có
+    if (typeof tf === 'undefined') {
+      await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
     }
+    if (typeof cocoSsd === 'undefined') {
+      await this.loadScriptSilently('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js');
+    }
+
+    // ✅ Dùng cocoSsd.load() mặc định để tránh CORS tfhub.dev
+    this.yoloModel = await cocoSsd.load();
+
+    this.isYOLOReady = true;
+    console.log("✅ YOLO (coco-ssd) đã tải thành công");
+  } catch (error) {
+    console.error("❌ YOLO load error:", error);
+    this.isYOLOReady = false;
   }
+}
 
   async loadScriptSilently(src) {
     return new Promise((resolve) => {
