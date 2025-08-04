@@ -376,6 +376,25 @@ function startGame() {
   gameContainer.classList.remove("hidden");
   generateNewLocation(currentDifficulty);
 }
+// ❗ GỢI Ý: đặt bên ngoài generateNewLocation()
+async function runOcrOnMapPreview(level) {
+  const canvas = await html2canvas(document.getElementById("mapPreview"));
+  const result = await Tesseract.recognize(canvas.toDataURL(), 'eng');
+  const text = result.data.text.toLowerCase();
+
+  console.log("🔍 Text nhận dạng được:", text);
+
+  const addressKeywords = ['street', 'road', 'avenue', 'city', 'district', 'village', 'ward', 'thành phố', 'đường', 'phường', 'quận'];
+  const isLikelyAddress = addressKeywords.some(keyword => text.includes(keyword));
+
+  if (isLikelyAddress) {
+    console.log("✅ Ảnh có khả năng chứa địa chỉ!");
+    return true;
+  } else {
+    console.log("⚠️ Không phát hiện địa chỉ rõ ràng.");
+    return false;
+  }
+}
 
 async function generateNewLocation(level) {
   const userLocation = await getUserLocation();
@@ -459,7 +478,7 @@ async function generateNewLocation(level) {
       location: coord, 
       radius: searchRadius,
       source: google.maps.StreetViewSource.OUTDOOR // Chỉ lấy ảnh outdoor
-    }, (data, status) => {
+    }, async (data, status) => {
       
       if (status === google.maps.StreetViewStatus.OK) {
         
@@ -502,60 +521,27 @@ async function generateNewLocation(level) {
           document.getElementById("mapPreview"), 
           panoramaOptions
         );
-        let foundValidOCR = false;
-setTimeout(() => {
-  html2canvas(document.getElementById("mapPreview")).then(canvas => {
-    Tesseract.recognize(
-      canvas.toDataURL(), 'eng',
-      { logger: m => console.log("📖 OCR:", m) }
-    ).then(({ data: { text } }) => {
-      console.log("🔍 Text nhận dạng được:", text);
+const ocrOk = await runOcrOnMapPreview(level);
 
-      // Gợi ý: kiểm tra nếu có từ mang nghĩa địa chỉ
-      const addressKeywords = ['street', 'road', 'avenue', 'city', 'district', 'village', 'ward', 'thành phố', 'đường', 'phường', 'quận'];
+    if (!ocrOk && level === 'easy' && tries < maxTries) {
+      console.log("🔁 Không thấy địa chỉ rõ ràng, thử ảnh khác...");
+      setTimeout(tryFindPanorama, 100);
+      return; // ⛔ Ngăn tiếp tục load ảnh này
+    }
 
-      const isLikelyAddress = addressKeywords.some(keyword =>
-        text.toLowerCase().includes(keyword)
-      );
-
-      if (isLikelyAddress) {
-  console.log("✅ Ảnh có khả năng chứa địa chỉ!");
-  foundValidOCR = true;  // <-- báo là ảnh này hợp lệ
-} else {
-  console.log("⚠️ Không phát hiện địa chỉ rõ ràng.");
-  if (!foundValidOCR && level === 'easy' && tries < maxTries) {
-    console.log("🔁 Đang thử ảnh khác vì không thấy địa chỉ.");
-    setTimeout(tryFindPanorama, 100);
+    // ✅ Nếu OCR OK, giữ nguyên ảnh và tiếp tục game
+    document.getElementById('showGuessMapBtn').classList.remove('hidden');
+    document.getElementById('submitGuessBtn').classList.add('hidden');
+    document.getElementById('guessMapContainer').style.display = 'none';
+    guessLocation = null;
+    if (guessMarker) guessMarker.setMap(null);
+    if (actualMarker) actualMarker.setMap(null);
   }
-}
+});
 
-    });
-  });
-}, 3000); // Delay 3s để đợi ảnh load xong
-
-        // Hiện button đoán vị trí
-        document.getElementById('showGuessMapBtn').classList.remove('hidden');
-        document.getElementById('submitGuessBtn').classList.add('hidden');
-        document.getElementById('guessMapContainer').style.display = 'none';
-        guessLocation = null;
-
-        // Reset markers nếu có
-        if (guessMarker) guessMarker.setMap(null);
-        if (actualMarker) actualMarker.setMap(null);
+   
         
-      } else {
-        console.log(`❌ Không tìm thấy Street View - Status: ${status}`);
-        
-        if (tries < maxTries) {
-          setTimeout(tryFindPanorama, 100);
-        } else {
-          alert(`⚠️ Không tìm thấy vị trí hợp lệ sau ${maxTries} lần thử. Vui lòng thử lại.`);
-          // Reset về màn hình chọn độ khó
-          gameContainer.classList.add("hidden");
-          difficultyContainer.classList.remove("hidden");
-        }
-      }
-    });
+      
   }
 
   // Bắt đầu tìm panorama
@@ -915,3 +901,4 @@ function loadGroupedGuesses() {
     container.style.display = 'block';
   });
 }
+
