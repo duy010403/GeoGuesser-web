@@ -523,11 +523,13 @@ async function generateNewLocation(level) {
         );
 const ocrOk = await runOcrOnMapPreview(level);
 
-    if (!ocrOk && level === 'easy' && tries < maxTries) {
-      console.log("🔁 Không thấy địa chỉ rõ ràng, thử ảnh khác...");
-      setTimeout(tryFindPanorama, 100);
-      return; // ⛔ Ngăn tiếp tục load ảnh này
-    }
+   if (!ocrOk) {
+  console.log("📉 OCR: Ảnh không có địa chỉ rõ ràng.");
+  // Optional: đánh dấu độ khó là "hard hơn dự kiến"
+  // updateUIWithRealDifficulty('hard');
+} else {
+  console.log("📈 OCR: Ảnh có thể dễ đoán (có địa chỉ).");
+}
 
     // ✅ Nếu OCR OK, giữ nguyên ảnh và tiếp tục game
     document.getElementById('showGuessMapBtn').classList.remove('hidden');
