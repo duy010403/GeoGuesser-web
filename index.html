@@ -254,19 +254,40 @@
     </div>
     
     <!-- AUTH SECTION -->
+<<<<<<< HEAD
      <div id="authContainer" class="card">
       <h2>🔐 Đăng nhập / Tạo tài khoản</h2>
       <p class="small">Tạo tài khoản hoặc đăng nhập để bắt đầu chơi</p>
       <div class="auth-container">
         <input type="email" id="userEmail" placeholder="Email của bạn..." autocomplete="username" />
         <input type="password" id="userPassword" placeholder="Mật khẩu..." autocomplete="current-password" />
+=======
+    <div id="authContainer" class="card">
+      <h2>🔐 Đăng nhập / Tạo tài khoản</h2>
+      <p class="small">Tạo tài khoản hoặc đăng nhập để bắt đầu chơi</p>
+      
+      <div class="auth-container">
+        <input type="email" id="userEmail" placeholder="Email của bạn..." autocomplete="username" />
+        <input type="password" id="userPassword" placeholder="Mật khẩu..." autocomplete="current-password" />
+        
+>>>>>>> 169a7d2 (Updated)
         <div class="auth-buttons">
           <button id="signupBtn" class="green">🆕 Tạo tài khoản</button>
           <button id="loginBtn" class="blue">🔐 Đăng nhập</button>
         </div>
+<<<<<<< HEAD
         <div id="authMessage" class="status-error hidden" style="margin-top: 15px;"></div>
         <div id="loggedInInfo" class="status-success hidden auth-info">
           <div style="text-align: center;">Chào mừng: <strong><span id="displayName"></span></strong></div>
+=======
+        
+        <div id="authMessage" class="status-error hidden" style="margin-top: 15px;"></div>
+        
+        <div id="loggedInInfo" class="status-success hidden auth-info">
+          <div style="text-align: center;">
+            Chào mừng: <strong><span id="displayName"></span></strong>
+          </div>
+>>>>>>> 169a7d2 (Updated)
           <button id="logoutUserBtn" class="yellow">🚪 Đăng xuất</button>
         </div>
       </div>
@@ -276,6 +297,7 @@
     <div id="displayNameContainer" class="card hidden">
       <h2>🎮 Thiết lập hồ sơ người chơi</h2>
       <p>Vui lòng đặt tên hiển thị cho tài khoản của bạn:</p>
+<<<<<<< HEAD
       <div style="max-width: 400px; margin: 20px auto;">
         <input type="text" id="displayNameInput" placeholder="Nhập tên hiển thị..." maxlength="20" style="font-size: 1.1rem; padding: 15px; text-align: center;" />
         <div class="small" style="text-align: center; margin-top: 10px;">Tối đa 20 ký tự • Sẽ hiển thị trong bảng xếp hạng</div>
@@ -290,6 +312,8 @@
     <div id="displayNameContainer" class="card hidden">
       <h2>🎮 Thiết lập hồ sơ người chơi</h2>
       <p>Vui lòng đặt tên hiển thị cho tài khoản của bạn:</p>
+=======
+>>>>>>> 169a7d2 (Updated)
       
       <div style="max-width: 400px; margin: 20px auto;">
         <input type="text" id="displayNameInput" placeholder="Nhập tên hiển thị..." 
@@ -310,6 +334,7 @@
     </div>
 
     <!-- DIFFICULTY SELECTION -->
+<<<<<<< HEAD
      <div id="difficultyContainer" class="card hidden">
       <h2>🎯 Chọn độ khó</h2>
       <p class="small">Chọn mức độ khó phù hợp với khả năng của bạn</p>
@@ -318,13 +343,45 @@
         <div class="difficulty-card medium"><h4 class="yellow badge">🟡 Trung bình</h4><p><strong>Khu vực châu Á</strong></p></div>
         <div class="difficulty-card hard"><h4 class="red badge">🔴 Khó</h4><p><strong>Toàn cầu</strong></p></div>
       </div>
+=======
+    <div id="difficultyContainer" class="card hidden">
+      <h2>🎯 Chọn độ khó</h2>
+      <p class="small">Chọn mức độ khó phù hợp với khả năng của bạn</p>
+      
+      <div class="difficulty-preview">
+        <div class="difficulty-card easy">
+          <h4 class="green badge">🟢 Dễ</h4>
+          <p><strong>Khu vực gần bạn</strong></p>
+          <p class="small">Trong phạm vi 10km từ vị trí hiện tại. Phù hợp cho người mới bắt đầu.</p>
+        </div>
+        <div class="difficulty-card medium">
+          <h4 class="yellow badge">🟡 Trung bình</h4>
+          <p><strong>Khu vực châu Á</strong></p>
+          <p class="small">Các quốc gia châu Á. Đòi hỏi kiến thức địa lý cơ bản.</p>
+        </div>
+        <div class="difficulty-card hard">
+          <h4 class="red badge">🔴 Khó</h4>
+          <p><strong>Toàn cầu</strong></p>
+          <p class="small">Bất kỳ đâu trên thế giới. Thử thách cho chuyên gia!</p>
+        </div>
+      </div>
+      
+>>>>>>> 169a7d2 (Updated)
       <div class="flex flex-center" style="margin-top: 30px;">
         <button id="btnEasy" onclick="setGameDifficulty('easy')" class="green">🟢 Dễ</button>
         <button id="btnMedium" onclick="setGameDifficulty('medium')" class="yellow">🟡 Trung bình</button>
         <button id="btnHard" onclick="setGameDifficulty('hard')" class="red">🔴 Khó</button>
       </div>
+<<<<<<< HEAD
       <div style="text-align: center; margin-top: 20px;">
         <button id="startGameBtn" onclick="startGame()" class="blue" style="font-size:1.1rem; padding:15px 30px;">🚀 Bắt đầu chơi</button>
+=======
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <button id="startGameBtn" onclick="startGame()" class="blue" style="font-size:1.1rem; padding:15px 30px;">
+          🚀 Bắt đầu chơi
+        </button>
+>>>>>>> 169a7d2 (Updated)
       </div>
     </div>
 
@@ -333,20 +390,41 @@
       <div class="flex" style="align-items: center; margin-bottom: 20px;">
         <h2 style="margin: 0;">Chào <span id="playerNameDisplay"></span>!</h2>
         <span id="currentDifficultyBadge" class="badge green">EASY</span>
+<<<<<<< HEAD
         <div style="margin-left: auto;"><span style="font-size: 1.2rem; font-weight: 600;">💯 Điểm: <span id="score">0</span></span></div>
       </div>
       <div id="mapPreview" style="width: 100%; height: 450px; margin-bottom:20px; border-radius: 12px;"></div>
+=======
+        <div style="margin-left: auto;">
+          <span style="font-size: 1.2rem; font-weight: 600;">💯 Điểm: <span id="score">0</span></span>
+        </div>
+      </div>
+
+      <div id="mapPreview" style="width: 100%; height: 450px; margin-bottom:20px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3);"></div>
+
+>>>>>>> 169a7d2 (Updated)
       <div class="flex flex-center">
         <button id="showGuessMapBtn" onclick="showGuessMap()" class="blue hidden">🗺️ Đoán vị trí</button>
         <button id="submitGuessBtn" onclick="submitGuess()" class="green hidden">✅ Xác nhận</button>
         <button id="viewOnGoogleMapBtn" onclick="viewOnGoogleMap()" class="yellow hidden">🌍 Xem trên Google Map</button>
         <button id="replayBtn" onclick="resetGame()" class="purple hidden">🔄 Chơi lại</button>
       </div>
+<<<<<<< HEAD
       <div id="guessMapContainer" style="display: none; width: 100%; height: 350px; margin-top:20px; border-radius: 12px;"><div id="guessMap" style="width:100%; height:100%;"></div></div>
       <div id="result" class="status-info hidden" style="margin-top: 20px; font-size: 1.1rem;"></div>
     </div>
 
 
+=======
+      
+      <div id="guessMapContainer" style="display: none; width: 100%; height: 350px; margin-top:20px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
+        <div id="guessMap" style="width:100%; height:100%;"></div>
+      </div>
+      
+      <div id="result" class="status-info hidden" style="margin-top: 20px; font-size: 1.1rem;"></div>
+    </div>
+
+>>>>>>> 169a7d2 (Updated)
     <!-- LEADERBOARD -->
     <div id="leaderboard" class="card">
       <h3 style="text-align:center; margin-bottom: 30px;">🏆 Bảng xếp hạng</h3>
@@ -427,6 +505,7 @@
   <!-- GOOGLE MAPS API -->
   // Thay thế script cũ bằng:
 <script>
+<<<<<<< HEAD
  async function loadGoogleMaps() {
     let apiKey;
     const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
@@ -451,5 +530,41 @@
   <script src="script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.0/dist/tesseract.min.js"></script>
 
+=======
+async function loadGoogleMaps() {
+  let apiKey;
+  const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+  
+  if (isLocal) {
+    // Local development - dùng key cứng
+    apiKey = "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM";
+    console.log('🏠 Running locally - using hardcoded key');
+  } else {
+    // Production - lấy key từ API
+    try {
+      const response = await fetch('/api/mapkey');
+      const data = await response.json();
+      apiKey = data.apiKey;
+      console.log('☁️ Got API key from server');
+    } catch (error) {
+      console.error('❌ Failed to get API key:', error);
+      // Fallback
+      apiKey = "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM";
+    }
+  }
+  
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
+// Call the function
+loadGoogleMaps();
+</script>
+  <!-- MAIN JAVASCRIPT -->
+  <script src="script.js"></script>
+>>>>>>> 169a7d2 (Updated)
 </body>
 </html>

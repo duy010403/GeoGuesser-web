@@ -25,6 +25,7 @@ let actualLocation, guessLocation;
 let guessMap;
 let streetViewService;
 
+<<<<<<< HEAD
 // NEW: Silent AI Vision Analysis with Real OCR & YOLO
 let visionAnalyzer = null;
 let preloadedLocations = {
@@ -34,6 +35,8 @@ let preloadedLocations = {
 };
 let isPreloading = false;
 
+=======
+>>>>>>> 169a7d2 (Updated)
 // UI refs
 const authContainer = document.getElementById("authContainer");
 const difficultyContainer = document.getElementById("difficultyContainer");
@@ -45,6 +48,7 @@ const currentDifficultyBadge = document.getElementById("currentDifficultyBadge")
 const authMessage = document.getElementById("authMessage");
 const loggedInInfo = document.getElementById("loggedInInfo");
 
+<<<<<<< HEAD
 // NEW: Silent Vision Analysis Service with Real Tesseract OCR & YOLO
 class SilentVisionAnalyzer {
   constructor() {
@@ -618,6 +622,8 @@ async findAndAnalyzeLocation(latlng, attempts = 0) {
   }
 }
 
+=======
+>>>>>>> 169a7d2 (Updated)
 // Init map service
 window.initMap = () => {
   streetViewService = new google.maps.StreetViewService();
@@ -690,11 +696,16 @@ auth.onAuthStateChanged(async (user) => {
   }
 });
 
+<<<<<<< HEAD
 // UPDATED: Function chính để xử lý sau khi đăng nhập
+=======
+// Function chính để xử lý sau khi đăng nhập
+>>>>>>> 169a7d2 (Updated)
 async function postLoginSetup(user) {
   try {
     authContainer.classList.add("hidden");
     
+<<<<<<< HEAD
     // NEW: Initialize silent AI vision analyzer in background
     if (!visionAnalyzer) {
       visionAnalyzer = new SilentVisionAnalyzer();
@@ -702,6 +713,8 @@ async function postLoginSetup(user) {
       visionAnalyzer.initialize().catch(() => {});
     }
     
+=======
+>>>>>>> 169a7d2 (Updated)
     const hasDisplayName = await checkUserDisplayName(user);
     
     if (hasDisplayName) {
@@ -943,7 +956,11 @@ function logoutUser() {
   });
 }
 
+<<<<<<< HEAD
 // UPDATED: Game difficulty with AI preloading
+=======
+// Game logic
+>>>>>>> 169a7d2 (Updated)
 function setGameDifficulty(level) {
   currentDifficulty = level;
   if (currentDifficultyBadge) {
@@ -953,6 +970,7 @@ function setGameDifficulty(level) {
     else if (level === 'medium') currentDifficultyBadge.classList.add("yellow");
     else if (level === 'hard') currentDifficultyBadge.classList.add("red");
   }
+<<<<<<< HEAD
   
   // NEW: Start silent preloading for selected difficulty
   if (visionAnalyzer && visionAnalyzer.isInitialized) {
@@ -963,6 +981,11 @@ function setGameDifficulty(level) {
 }
 
 // UPDATED: Start game with AI
+=======
+}
+
+
+>>>>>>> 169a7d2 (Updated)
 function startGame() {
   if (!playerName) {
     alert("Vui lòng đăng nhập trước.");
@@ -970,6 +993,7 @@ function startGame() {
   }
   difficultyContainer.classList.add("hidden");
   gameContainer.classList.remove("hidden");
+<<<<<<< HEAD
   
   // NEW: Use AI-enhanced location generation
   if (visionAnalyzer && visionAnalyzer.isInitialized) {
@@ -1190,6 +1214,14 @@ function displayLocation(locationData) {
 async function generateNewLocation(level) {
   const userLocation = await getUserLocation();
   const maxTries = 20;
+=======
+  generateNewLocation(currentDifficulty);
+}
+
+async function generateNewLocation(level) {
+  const userLocation = await getUserLocation();
+  const maxTries = 20; // Tăng số lần thử để tìm được panorama phù hợp
+>>>>>>> 169a7d2 (Updated)
   let tries = 0;
 
   function getRandomNearbyCoords(center, radiusKm) {
@@ -1200,20 +1232,47 @@ async function generateNewLocation(level) {
     return { lat: center.lat + lat, lng: center.lng + lng };
   }
 
+<<<<<<< HEAD
   function isValidPanoramaForLevel(data, level) {
     if (!data || !data.location) return false;
     
     const links = data.links || [];
     const hasLinks = links.length > 0;
+=======
+  // Hàm kiểm tra chất lượng panorama dựa trên metadata
+  function isValidPanoramaForLevel(data, level) {
+    if (!data || !data.location) return false;
+    
+    // Kiểm tra có phải panorama outdoor không (không phải indoor)
+    const links = data.links || [];
+    const hasLinks = links.length > 0;
+    
+    // Kiểm tra có phải ảnh chụp từ đường phố không
+>>>>>>> 169a7d2 (Updated)
     const isStreetLevel = data.location.pano && data.location.pano.length > 0;
     
     switch(level) {
       case 'easy':
+<<<<<<< HEAD
         return hasLinks && links.length >= 2 && isStreetLevel;
       case 'medium':
         return hasLinks && links.length >= 1 && isStreetLevel;
       case 'hard':
         return isStreetLevel;
+=======
+        // Dễ: Cần có nhiều links (nghĩa là ở đường phố có thể di chuyển)
+        // và không phải ảnh chụp từ xe/máy bay (thường có ít links)
+        return hasLinks && links.length >= 2 && isStreetLevel;
+        
+      case 'medium':
+        // Trung bình: Chấp nhận ít links hơn, có thể là khu vực ít đường hơn
+        return hasLinks && links.length >= 1 && isStreetLevel;
+        
+      case 'hard':
+        // Khó: Chấp nhận mọi loại panorama hợp lệ
+        return isStreetLevel;
+        
+>>>>>>> 169a7d2 (Updated)
       default:
         return isStreetLevel;
     }
@@ -1225,25 +1284,49 @@ async function generateNewLocation(level) {
     let searchRadius;
 
     if (level === 'easy') {
+<<<<<<< HEAD
       searchRadius = 10000;
       coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
       
       if (tries > 5) {
         searchRadius = 5000;
+=======
+      // Dễ: Trong vòng 10km, ưu tiên khu vực đô thị
+      searchRadius = 10000;
+      coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
+      
+      // Thêm bias về phía trung tâm thành phố (giảm radius để tăng khả năng có đường phố)
+      if (tries > 5) {
+        searchRadius = 5000; // Thu nhỏ phạm vi nếu thử nhiều lần
+>>>>>>> 169a7d2 (Updated)
         coord = getRandomNearbyCoords(userLocation, searchRadius / 1000);
       }
       
     } else if (level === 'medium') {
+<<<<<<< HEAD
       coord = {
         lat: 10 + Math.random() * 50,
         lng: 60 + Math.random() * 90
+=======
+      // Trung bình: Toàn châu Á
+      coord = {
+        lat: 10 + Math.random() * 50,    // Từ 10°N đến 60°N
+        lng: 60 + Math.random() * 90     // Từ 60°E đến 150°E
+>>>>>>> 169a7d2 (Updated)
       };
       searchRadius = 50000;
       
     } else {
+<<<<<<< HEAD
       coord = {
         lat: -85 + Math.random() * 170,
         lng: -180 + Math.random() * 360
+=======
+      // Khó: Toàn thế giới  
+      coord = {
+        lat: -85 + Math.random() * 170,  // Từ -85° đến 85°
+        lng: -180 + Math.random() * 360  // Từ -180° đến 180°
+>>>>>>> 169a7d2 (Updated)
       };
       searchRadius = 100000;
     }
