@@ -387,7 +387,7 @@ async function runOcrToDetectSign() {
   const streetKeywords = [
     'street', 'st.', 'road', 'rd.', 'avenue', 'ave',
     'boulevard', 'blvd', 'alley', 'hẻm', 'ngõ', 'ngách',
-    'đường', 'quốc lộ', 'ql', 'hwy', 'highway',
+    'đường', 'quốc lộ', 'ql', 'hwy', 'highway', 'QUẬN', 'phường','quận',
     'lê', 'nguyễn', 'trần', 'phạm', 'thái', 'văn', 'hoàng', 'đinh' // họ phổ biến
   ];
 
