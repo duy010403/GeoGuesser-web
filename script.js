@@ -377,24 +377,23 @@ function startGame() {
   generateNewLocation(currentDifficulty);
 }
 // ❗ GỢI Ý: đặt bên ngoài generateNewLocation()
-async function runOcrOnMapPreview(level) {
+async function runOcrToDetectSign() {
   const canvas = await html2canvas(document.getElementById("mapPreview"));
   const result = await Tesseract.recognize(canvas.toDataURL(), 'eng');
   const text = result.data.text.toLowerCase();
 
-  console.log("🔍 Text nhận dạng được:", text);
+  console.log("🔍 OCR (tên đường):", text);
 
-  const addressKeywords = ['street', 'road', 'avenue', 'city', 'district', 'village', 'ward', 'thành phố', 'đường', 'phường', 'quận'];
-  const isLikelyAddress = addressKeywords.some(keyword => text.includes(keyword));
+  const streetKeywords = [
+    'street', 'st.', 'road', 'rd.', 'avenue', 'ave',
+    'boulevard', 'blvd', 'alley', 'hẻm', 'ngõ', 'ngách',
+    'đường', 'quốc lộ', 'ql', 'hwy', 'highway',
+    'lê', 'nguyễn', 'trần', 'phạm', 'thái', 'văn', 'hoàng', 'đinh' // họ phổ biến
+  ];
 
-  if (isLikelyAddress) {
-    console.log("✅ Ảnh có khả năng chứa địa chỉ!");
-    return true;
-  } else {
-    console.log("⚠️ Không phát hiện địa chỉ rõ ràng.");
-    return false;
-  }
+  return streetKeywords.some(keyword => text.includes(keyword));
 }
+
 
 async function generateNewLocation(level) {
   const userLocation = await getUserLocation();
@@ -474,77 +473,66 @@ async function generateNewLocation(level) {
 
     console.log(`🔍 Thử lần ${tries}/${maxTries} - Tọa độ: ${coord.lat.toFixed(4)}, ${coord.lng.toFixed(4)}`);
 
-    streetViewService.getPanorama({ 
-      location: coord, 
-      radius: searchRadius,
-      source: google.maps.StreetViewSource.OUTDOOR // Chỉ lấy ảnh outdoor
-    }, async (data, status) => {
-      
-      if (status === google.maps.StreetViewStatus.OK) {
-        
-        // Kiểm tra chất lượng panorama theo độ khó
-        if (!isValidPanoramaForLevel(data, level)) {
-          console.log(`❌ Panorama không phù hợp với độ khó ${level} - Links: ${(data.links || []).length}`);
-          
-          if (tries < maxTries) {
-            setTimeout(tryFindPanorama, 100); // Delay nhỏ để tránh spam API
-          } else {
-            alert(`⚠️ Không tìm thấy vị trí phù hợp sau ${maxTries} lần thử. Đang thử lại...`);
-            tries = 0;
-            setTimeout(tryFindPanorama, 500);
-          }
-          return;
+    streetViewService.getPanorama({
+  location: coord,
+  radius: searchRadius,
+  source: google.maps.StreetViewSource.OUTDOOR
+}, async (data, status) => {
+
+  if (status === google.maps.StreetViewStatus.OK) {
+
+    // Kiểm tra chất lượng panorama theo độ khó
+    if (!isValidPanoramaForLevel(data, level)) {
+      console.log(`❌ Panorama không phù hợp với độ khó ${level} - Links: ${(data.links || []).length}`);
+
+      if (tries < maxTries) {
+        setTimeout(tryFindPanorama, 100);
+      } else {
+        alert(`⚠️ Không tìm thấy vị trí phù hợp sau ${maxTries} lần thử. Đang thử lại...`);
+        tries = 0;
+        setTimeout(tryFindPanorama, 500);
+      }
+      return;
+    }
+
+    // Panorama hợp lệ
+    actualLocation = data.location.latLng;
+    console.log(`✅ Tìm thấy panorama phù hợp! Links: ${(data.links || []).length}, Pano ID: ${data.location.pano}`);
+
+    const panoramaOptions = {
+      position: actualLocation,
+      pov: {
+        heading: Math.random() * 360,
+        pitch: -5 + Math.random() * 10
+      },
+      zoom: 1,
+      addressControl: false,
+      linksControl: true,
+      panControl: true,
+      zoomControl: true,
+      fullscreenControl: false,
+      motionTracking: false,
+      motionTrackingControl: false
+    };
+
+    new google.maps.StreetViewPanorama(
+      document.getElementById("mapPreview"),
+      panoramaOptions
+    );
+
+    // 🧠 Nếu là chế độ dễ, thì kiểm tra OCR để tìm biển chỉ đường
+    if (level === 'easy') {
+      setTimeout(async () => {
+        const hasStreetSign = await runOcrToDetectSign();
+        if (hasStreetSign) {
+          console.log("✅ Phát hiện tên đường hoặc biển chỉ dẫn!");
+        } else {
+          console.log("⚠️ Không phát hiện biển chỉ dẫn.");
         }
-
-        // Panorama hợp lệ
-        actualLocation = data.location.latLng;
-        console.log(`✅ Tìm thấy panorama phù hợp! Links: ${(data.links || []).length}, Pano ID: ${data.location.pano}`);
-        
-        // Tạo Street View với cài đặt tối ưu
-        const panoramaOptions = {
-          position: actualLocation,
-          pov: { 
-            heading: Math.random() * 360, // Random hướng nhìn
-            pitch: -5 + Math.random() * 10 // Pitch từ -5 đến 5 độ
-          },
-          zoom: 1,
-          addressControl: false,    // Ẩn địa chỉ
-          linksControl: true,       // Hiện nút di chuyển
-          panControl: true,         // Cho phép pan
-          zoomControl: true,        // Cho phép zoom
-          fullscreenControl: false, // Ẩn fullscreen
-          motionTracking: false,    // Tắt motion tracking
-          motionTrackingControl: false
-        };
-
-        new google.maps.StreetViewPanorama(
-          document.getElementById("mapPreview"), 
-          panoramaOptions
-        );
-const ocrOk = await runOcrOnMapPreview(level);
-
-   if (!ocrOk) {
-  console.log("📉 OCR: Ảnh không có địa chỉ rõ ràng.");
-  // Optional: đánh dấu độ khó là "hard hơn dự kiến"
-  // updateUIWithRealDifficulty('hard');
-} else {
-  console.log("📈 OCR: Ảnh có thể dễ đoán (có địa chỉ).");
-}
-
-    // ✅ Nếu OCR OK, giữ nguyên ảnh và tiếp tục game
-    document.getElementById('showGuessMapBtn').classList.remove('hidden');
-    document.getElementById('submitGuessBtn').classList.add('hidden');
-    document.getElementById('guessMapContainer').style.display = 'none';
-    guessLocation = null;
-    if (guessMarker) guessMarker.setMap(null);
-    if (actualMarker) actualMarker.setMap(null);
+      }, 2000); // Đợi 2s cho ảnh load xong
+    }
   }
 });
-
-   
-        
-      
-  }
 
   // Bắt đầu tìm panorama
   console.log(`🎯 Bắt đầu tìm panorama cho độ khó: ${level.toUpperCase()}`);
@@ -902,5 +890,5 @@ function loadGroupedGuesses() {
 
     container.style.display = 'block';
   });
-}
+}}
 
