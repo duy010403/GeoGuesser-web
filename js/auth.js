@@ -27,6 +27,10 @@ export async function signUp() {
     elements.authMessage.textContent = getFirebaseErrorMessage(e);
     elements.authMessage.classList.remove('hidden');
   }
+  await userCred.user.sendEmailVerification();
+alert('📧 Một email xác thực đã được gửi...');
+await firebase.auth().signOut(); // ✅ Bắt buộc user xác minh xong mới login
+
 }
 
 
@@ -51,6 +55,16 @@ export async function signIn() {
     elements.authMessage.textContent = getFirebaseErrorMessage(e);
     elements.authMessage.classList.remove('hidden');
   }
+  const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
+const user = userCred.user;
+
+if (!user.emailVerified) {
+  await firebase.auth().signOut();
+  elements.authMessage.textContent = '⚠️ Bạn cần xác minh email trước khi đăng nhập.';
+  elements.authMessage.classList.remove('hidden');
+  return;
+}
+
 }
 
 export async function signOut() {
@@ -295,6 +309,8 @@ export async function postLoginSetup(user) {
     elements.authMessage.textContent = 'Có lỗi xảy ra: ' + getFirebaseErrorMessage(error);
     elements.authMessage.classList.remove('hidden');
   }
+  await user.reload(); // đảm bảo lấy đúng trạng thái mới nhất
+
 }
 
 export function resetUIAfterLogout() {
