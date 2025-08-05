@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GeoGuesser Game</title>
+  
   <style>
     body { 
       font-family: system-ui,-apple-system,BlinkMacSystemFont,sans-serif; 
@@ -82,6 +83,20 @@
     }
     .flex-center { 
       justify-content: center; 
+    }
+    
+    /* Loading indicator */
+    .loading-indicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      z-index: 10000;
+      display: none;
     }
     
     /* Auth buttons specific styling */
@@ -201,10 +216,9 @@
       margin-top: 10px;
     }
 
-    /* Fixed Logout Button */
     .logout-fixed {
       position: fixed;
-      bottom: 25px;
+      top: 25px;
       right: 25px;
       z-index: 1000;
       background: linear-gradient(135deg, #e74c3c, #c0392b);
@@ -245,7 +259,6 @@
   </style>
 </head>
 <body>
-  <div style="max-width:1200px; margin:0 auto; padding:20px; position:relative;">
     
     <!-- HEADER -->
     <div class="header">
@@ -295,7 +308,7 @@
         <button id="saveDisplayNameBtn" class="green" style="font-size:1.1rem; padding:15px 30px;">
           ✅ Lưu và tiếp tục
         </button>
-        <button onclick="skipDisplayName()" class="yellow" style="padding:12px 20px;">
+        <button id="skipDisplayNameBtn" class="yellow" style="padding:12px 20px;">
           ⏭️ Bỏ qua
         </button>
       </div>
@@ -325,13 +338,13 @@
       </div>
       
       <div class="flex flex-center" style="margin-top: 30px;">
-        <button id="btnEasy" onclick="setGameDifficulty('easy')" class="green">🟢 Dễ</button>
-        <button id="btnMedium" onclick="setGameDifficulty('medium')" class="yellow">🟡 Trung bình</button>
-        <button id="btnHard" onclick="setGameDifficulty('hard')" class="red">🔴 Khó</button>
+        <button id="btnEasy" data-difficulty="easy" class="green">🟢 Dễ</button>
+        <button id="btnMedium" data-difficulty="medium" class="yellow">🟡 Trung bình</button>
+        <button id="btnHard" data-difficulty="hard" class="red">🔴 Khó</button>
       </div>
       
       <div style="text-align: center; margin-top: 20px;">
-        <button id="startGameBtn" onclick="startGame()" class="blue" style="font-size:1.1rem; padding:15px 30px;">
+        <button id="startGameBtn" class="blue" style="font-size:1.1rem; padding:15px 30px;">
           🚀 Bắt đầu chơi
         </button>
       </div>
@@ -350,10 +363,10 @@
       <div id="mapPreview" style="width: 100%; height: 450px; margin-bottom:20px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3);"></div>
 
       <div class="flex flex-center">
-        <button id="showGuessMapBtn" onclick="showGuessMap()" class="blue hidden">🗺️ Đoán vị trí</button>
-        <button id="submitGuessBtn" onclick="submitGuess()" class="green hidden">✅ Xác nhận</button>
-        <button id="viewOnGoogleMapBtn" onclick="viewOnGoogleMap()" class="yellow hidden">🌍 Xem trên Google Map</button>
-        <button id="replayBtn" onclick="resetGame()" class="purple hidden">🔄 Chơi lại</button>
+        <button id="showGuessMapBtn" class="blue hidden">🗺️ Đoán vị trí</button>
+        <button id="submitGuessBtn" class="green hidden">✅ Xác nhận</button>
+        <button id="viewOnGoogleMapBtn" class="yellow hidden">🌍 Xem trên Google Map</button>
+        <button id="replayBtn" class="purple hidden">🔄 Chơi lại</button>
       </div>
       
       <div id="guessMapContainer" style="display: none; width: 100%; height: 350px; margin-top:20px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
@@ -365,32 +378,31 @@
 
     <!-- LEADERBOARD -->
     <div id="leaderboard" class="card">
-      <h3 style="text-align:center; margin-bottom: 30px;">🏆 Bảng xếp hạng</h3>
-      <div class="difficulty-preview">
-        <div class="difficulty-card easy">
-          <h4 class="green badge" style="margin-bottom: 15px;">🟢 Dễ</h4>
-          <table>
-            <thead><tr><th>👤 Người chơi</th><th>💯 Điểm</th></tr></thead>
-            <tbody id="scoreTable-easy"></tbody>
-          </table>
-        </div>
-        <div class="difficulty-card medium">
-          <h4 class="yellow badge" style="margin-bottom: 15px;">🟡 Trung bình</h4>
-          <table>
-            <thead><tr><th>👤 Người chơi</th><th>💯 Điểm</th></tr></thead>
-            <tbody id="scoreTable-medium"></tbody>
-          </table>
-        </div>
-        <div class="difficulty-card hard">
-          <h4 class="red badge" style="margin-bottom: 15px;">🔴 Khó</h4>
-          <table>
-            <thead><tr><th>👤 Người chơi</th><th>💯 Điểm</th></tr></thead>
-            <tbody id="scoreTable-hard"></tbody>
-          </table>
-        </div>
-      </div>
+  <h3 style="text-align:center; margin-bottom: 30px;">🏆 Bảng xếp hạng</h3>
+  <div class="difficulty-preview">
+    <div class="difficulty-card easy">
+      <h4 class="green badge" style="margin-bottom: 15px;">🟢 Dễ</h4>
+      <table class="leaderboard-table">
+        <thead><tr><th>👤 Người chơi</th><th>💯 Điểm</th></tr></thead>
+        <tbody id="scoreTable-easy"></tbody>
+      </table>
     </div>
-
+    <div class="difficulty-card medium">
+      <h4 class="yellow badge" style="margin-bottom: 15px;">🟡 Trung bình</h4>
+      <table class="leaderboard-table">
+        <thead><tr><th>👤 Người chơi</th><th>💯 Điểm</th></tr></thead>
+        <tbody id="scoreTable-medium"></tbody>
+      </table>
+    </div>
+    <div class="difficulty-card hard">
+      <h4 class="red badge" style="margin-bottom: 15px;">🔴 Khó</h4>
+      <table class="leaderboard-table">
+        <thead><tr><th>👤 Người chơi</th><th>💯 Điểm</th></tr></thead>
+        <tbody id="scoreTable-hard"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
     <!-- ADMIN SECTION -->
     <div id="adminLoginContainer" class="card hidden">
       <h3>🔧 Bảng điều khiển Admin</h3>
@@ -399,9 +411,14 @@
         <input type="password" id="adminPassword" placeholder="Mật khẩu admin" />
         
         <div class="flex" style="margin-top: 15px;">
-          <button onclick="adminLogin()" class="purple">🔐 Đăng nhập</button>
-          <button onclick="adminLogout()" id="logoutBtn" class="yellow hidden">🚪 Đăng xuất</button>
-          <button onclick="deleteAllScores()" id="deleteBtn" class="red hidden">🗑️ Xóa điểm</button>
+          <button id="adminLoginBtn" class="purple">🔐 Đăng nhập</button>
+          <button id="adminLogoutBtn" class="yellow hidden">🚪 Đăng xuất</button>
+          <button id="deleteBtn" class="red hidden">🗑️ Xóa điểm</button>
+        </div>
+        
+        <div class="flex" style="margin-top: 10px;">
+          <button id="loadGuessesBtn" class="blue hidden">📊 Tải lịch sử</button>
+          <button id="loadGroupedBtn" class="purple hidden">📅 Tải theo ngày</button>
         </div>
       </div>
 
@@ -431,7 +448,7 @@
   </div>
 
   <!-- FIXED LOGOUT BUTTON -->
-  <button onclick="logoutUser()" class="logout-fixed hidden" id="fixedLogoutBtn">
+  <button class="logout-fixed hidden" id="fixedLogoutBtn">
     🚪 Đăng xuất
   </button>
 
@@ -441,41 +458,41 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <!-- GOOGLE MAPS API -->
-  
-<script>
-async function loadGoogleMaps() {
-  let apiKey;
-  const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
-  
-  if (isLocal) {
-    // Local development - dùng key cứng
-    apiKey = "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM";
-    console.log('🏠 Running locally - using hardcoded key');
-  } else {
-    // Production - lấy key từ API
-    try {
-      const response = await fetch('/api/mapkey');
-      const data = await response.json();
-      apiKey = data.apiKey;
-      console.log('☁️ Got API key from server');
-    } catch (error) {
-      console.error('❌ Failed to get API key:', error);
-      // Fallback
-      apiKey = "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM";
+  <script>
+    async function loadGoogleMaps() {
+      let apiKey;
+      const isLocal = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+      
+      if (isLocal) {
+        // Local development - dùng key cứng
+        apiKey = "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM";
+        console.log('🏠 Running locally - using hardcoded key');
+      } else {
+        // Production - lấy key từ API
+        try {
+          const response = await fetch('/api/mapkey');
+          const data = await response.json();
+          apiKey = data.apiKey;
+          console.log('☁️ Got API key from server');
+        } catch (error) {
+          console.error('❌ Failed to get API key:', error);
+          // Fallbackfs
+          apiKey = "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM";
+        }
+      }
+      
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
     }
-  }
-  
-  const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
-  script.async = true;
-  script.defer = true;
-  document.head.appendChild(script);
-}
 
-// Call the function
-loadGoogleMaps();
-</script>
-  <!-- MAIN JAVASCRIPT -->
-  <script src="script.js"></script>
+    // Call the function
+    loadGoogleMaps();
+  </script>
+
+  <!-- JAVASCRIPT MODULES -->
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>

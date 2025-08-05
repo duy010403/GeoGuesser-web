@@ -1,4 +1,4 @@
-// Firebase init (must match config)
+
 const firebaseConfig = {
   apiKey: "AIzaSyCGMcrDszDaktX6fXDpaT4Fx8k12N9RuCM",
   authDomain: "geoguesser-84d8b.firebaseapp.com",
@@ -13,10 +13,10 @@ firebase.initializeApp(firebaseConfig);
 window.db = firebase.database();
 window.auth = firebase.auth();
 
-// Admin email
+
 const ADMIN_EMAIL = "duyga154@gmail.com";
 
-// State
+
 let playerName = '';
 let score = 0;
 let currentDifficulty = 'easy';
@@ -25,7 +25,7 @@ let actualLocation, guessLocation;
 let guessMap;
 let streetViewService;
 
-// UI refs
+
 const authContainer = document.getElementById("authContainer");
 const difficultyContainer = document.getElementById("difficultyContainer");
 const gameContainer = document.getElementById("gameContainer");
@@ -36,13 +36,13 @@ const currentDifficultyBadge = document.getElementById("currentDifficultyBadge")
 const authMessage = document.getElementById("authMessage");
 const loggedInInfo = document.getElementById("loggedInInfo");
 
-// Init map service
+
 window.initMap = () => {
   streetViewService = new google.maps.StreetViewService();
   loadLeaderboard();
 };
 
-// Auth listeners
+
 document.getElementById("signupBtn").addEventListener("click", async () => {
   const email = document.getElementById("userEmail").value.trim();
   const password = document.getElementById("userPassword").value;
@@ -833,7 +833,7 @@ function loadGroupedGuesses() {
       grouped[dateStr][g.difficulty]?.push(g);
     });
 
-    const container = document.getElementById("adminHistoryGrouped");
+    const container = document.getElementById("//HistoryGrouped");
     container.innerHTML = '';
 
     Object.keys(grouped).sort((a, b) => {
