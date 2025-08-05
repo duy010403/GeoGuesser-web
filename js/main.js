@@ -21,7 +21,8 @@ import {
   showGuessMap, 
   submitGuess, 
   resetGame, 
-  viewOnGoogleMap 
+  viewOnGoogleMap,
+  initRealtimeLeaderboard
 } from './game.js';
 import { 
   adminLogout,
@@ -316,6 +317,8 @@ function initApp() {
     const waitForMapsAndLoadBoard = () => {
       if (typeof google !== 'undefined' && google.maps) {
         loadLeaderboard();
+        // Initialize real-time leaderboard updates
+        initRealtimeLeaderboard();
       } else {
         setTimeout(waitForMapsAndLoadBoard, 1000);
       }
