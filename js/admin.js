@@ -1,4 +1,4 @@
-// admin.js
+// admin.js - Updated version with new leaderboard integration
 import { auth, db } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState } from './game-state.js';
@@ -32,23 +32,20 @@ export function adminLogin() {
   }
   
   auth.signInWithEmailAndPassword(email, pass)
-   // Trong adminLogin(), thay đổi phần sau khi login thành công:
-.then(() => {
-  console.log('✅ Admin đăng nhập thành công');
-  
-  // Đợi DOM render xong trước khi thao tác
-  setTimeout(() => {
-    showAdminButtons();
-    updateGameState({ isAdminLoggedIn: true });
-    loadAdminGuesses();
-    loadGroupedGuesses();
-    loadLeaderboard();
-  }, 100);
-  
-  alert('Đăng nhập admin thành công!');
-})
+    .then(() => {
+      console.log('✅ Admin đăng nhập thành công');
       
-    
+      // Đợi DOM render xong trước khi thao tác
+      setTimeout(() => {
+        showAdminButtons();
+        updateGameState({ isAdminLoggedIn: true });
+        loadAdminGuesses();
+        loadGroupedGuesses();
+        loadLeaderboard();
+      }, 100);
+      
+      alert('Đăng nhập admin thành công!');
+    })
     .catch((error) => {
       console.error('❌ Admin login error:', error);
       alert('Sai thông tin đăng nhập! ' + error.message);
@@ -265,9 +262,7 @@ export function loadGroupedGuesses() {
   });
 }
 
-
-
-// Export loadLeaderboard function for use in other modules
+// Updated loadLeaderboard function with new UI integration
 export function loadLeaderboard() {
   console.log('🔄 Loading leaderboard...');
   
@@ -275,38 +270,38 @@ export function loadLeaderboard() {
     const scoreData = snapshot.val() || {};
     const summaries = { easy: {}, medium: {}, hard: {} };
 
+    // Process and group scores by difficulty and player
     Object.values(scoreData).forEach(({ name, score, difficulty }) => {
       if (!summaries[difficulty]) return;
       if (!summaries[difficulty][name]) summaries[difficulty][name] = 0;
       summaries[difficulty][name] += score;
     });
 
+    // Populate each difficulty level
     ['easy', 'medium', 'hard'].forEach(level => {
-      const tbody = document.getElementById(`scoreTable-${level}`);
-      if (!tbody) {
-        console.log(`❌ Score table for ${level} not found`);
-        return;
-      }
-      
-      tbody.innerHTML = '';
       const sorted = Object.entries(summaries[level] || {})
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
+        .sort((a, b) => b[1] - a[1]) // Sort by score descending
+        .slice(0, 10); // Top 10 players
         
-      sorted.forEach(([name, score], index) => {
-        const tr = document.createElement("tr");
-        tr.style.backgroundColor = index % 2 === 0 ? '#f9f9f9' : 'white';
-        tr.innerHTML = `
-          <td style="padding: 8px; text-align: left;">${name}</td>
-          <td style="padding: 8px; text-align: right; font-weight: bold;">${score}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      // Use the global populateLeaderboard function
+      if (typeof window !== 'undefined' && window.populateLeaderboard) {
+        window.populateLeaderboard(level, sorted);
+        console.log(`✅ Leaderboard populated for ${level}: ${sorted.length} players`);
+      } else {
+        console.error('❌ populateLeaderboard function not found');
+      }
     });
     
     console.log('✅ Leaderboard loaded successfully');
   }).catch(error => {
     console.error('❌ Error loading leaderboard:', error);
+    
+    // Show empty state for all difficulties on error
+    ['easy', 'medium', 'hard'].forEach(level => {
+      if (typeof window !== 'undefined' && window.populateLeaderboard) {
+        window.populateLeaderboard(level, []);
+      }
+    });
   });
 }
 
