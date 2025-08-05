@@ -29,7 +29,6 @@ export async function signUp() {
   }
 }
 
-
 export async function signIn() {
   const email = elements.userEmail.value.trim();
   const password = elements.userPassword.value;
@@ -43,24 +42,23 @@ export async function signIn() {
   }
   
   try {
-    // Fixed: Use Firebase v8 syntax correctly
     const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
-    console.log('✅ Đăng nhập thành công:', userCred.user.email);
+    const user = userCred.user;
+
+    // Kiểm tra email verification
+    if (!user.emailVerified) {
+      await firebase.auth().signOut();
+      elements.authMessage.textContent = '⚠️ Bạn cần xác minh email trước khi đăng nhập.';
+      elements.authMessage.classList.remove('hidden');
+      return;
+    }
+
+    console.log('✅ Đăng nhập thành công:', user.email);
   } catch (e) {
     console.error('❌ Lỗi đăng nhập:', e);
     elements.authMessage.textContent = getFirebaseErrorMessage(e);
     elements.authMessage.classList.remove('hidden');
   }
-  const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
-const user = userCred.user;
-
-if (!user.emailVerified) {
-  await firebase.auth().signOut();
-  elements.authMessage.textContent = '⚠️ Bạn cần xác minh email trước khi đăng nhập.';
-  elements.authMessage.classList.remove('hidden');
-  return;
-}
-
 }
 
 export async function signOut() {
@@ -128,34 +126,13 @@ export async function checkUserDisplayName(user) {
 
 export async function saveDisplayName() {
   const displayName = elements.displayNameInput.value.trim();
-  const user = auth.currentUser;
+  const user = firebase.auth().currentUser;
 
-  if (!user || !displayName) return;
-
-  const usernamesRef = db.ref('usernames');
-  const snapshot = await usernamesRef.child(displayName).once('value');
-
-  if (snapshot.exists()) {
-    alert('⚠️ Tên hiển thị này đã được sử dụng. Vui lòng chọn tên khác!');
-    elements.displayNameInput.focus();
+  if (!user) {
+    alert('❌ Không tìm thấy thông tin người dùng!');
     return;
   }
 
-  // Nếu không trùng, tiếp tục lưu
-  await user.updateProfile({ displayName });
-
-  const userRef = db.ref(`users/${user.uid}`);
-  await userRef.update({
-    displayName: displayName,
-    email: user.email
-  });
-
-  // Ghi thêm vào bảng usernames để khóa tên lại
-  await usernamesRef.child(displayName).set(user.uid);
-
-  alert('✅ Tên hiển thị đã được lưu!');
-}
-  
   if (!displayName) {
     alert('⚠️ Vui lòng nhập tên hiển thị!');
     elements.displayNameInput.focus();
@@ -180,25 +157,43 @@ export async function saveDisplayName() {
     elements.displayNameInput.focus();
     return;
   }
-  
+
+  const saveBtn = elements.saveDisplayNameBtn;
   if (saveBtn) {
     saveBtn.disabled = true;
-    saveBtn.textContent = '⏳ Đang lưu...';
+    saveBtn.textContent = '⏳ Đang kiểm tra...';
   }
-  
+
   try {
-    const user = firebase.auth().currentUser; // Fixed: Use firebase.auth()
-    
+    // Kiểm tra trùng lặp tên hiển thị
+    const usernamesRef = db.ref('usernames');
+    const snapshot = await usernamesRef.child(displayName).once('value');
+
+    if (snapshot.exists() && snapshot.val() !== user.uid) {
+      alert('⚠️ Tên hiển thị này đã được sử dụng. Vui lòng chọn tên khác!');
+      elements.displayNameInput.focus();
+      return;
+    }
+
+    if (saveBtn) {
+      saveBtn.textContent = '⏳ Đang lưu...';
+    }
+
+    // Lưu displayName vào Firebase Auth profile
     await user.updateProfile({
       displayName: displayName
     });
     
+    // Lưu vào database
     const userRef = db.ref(`users/${user.uid}`);
     await userRef.update({
       displayName: displayName,
       email: user.email,
       lastUpdated: firebase.database.ServerValue.TIMESTAMP
     });
+
+    // Lưu vào bảng usernames để tránh trùng lặp
+    await usernamesRef.child(displayName).set(user.uid);
     
     console.log('✅ Đã lưu displayName thành công:', displayName);
     
@@ -216,36 +211,52 @@ export async function saveDisplayName() {
       saveBtn.textContent = '✅ Lưu và tiếp tục';
     }
   }
-
+}
 
 export async function skipDisplayName() {
-  const user = firebase.auth().currentUser; // Fixed: Use firebase.auth()
+  const user = firebase.auth().currentUser;
   if (!user) return;
   
   try {
     const emailUsername = user.email.split('@')[0];
+    let finalUsername = emailUsername;
+    let counter = 1;
+
     const saveBtn = elements.saveDisplayNameBtn;
-    
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.textContent = '⏳ Đang lưu...';
+      saveBtn.textContent = '⏳ Đang tạo tên...';
+    }
+
+    // Kiểm tra trùng lặp và tạo tên duy nhất
+    const usernamesRef = db.ref('usernames');
+    while (true) {
+      const snapshot = await usernamesRef.child(finalUsername).once('value');
+      if (!snapshot.exists()) {
+        break; // Tên này chưa được sử dụng
+      }
+      counter++;
+      finalUsername = `${emailUsername}${counter}`;
     }
     
     await user.updateProfile({
-      displayName: emailUsername
+      displayName: finalUsername
     });
     
     const userRef = db.ref(`users/${user.uid}`);
     await userRef.update({
-      displayName: emailUsername,
+      displayName: finalUsername,
       email: user.email,
       lastUpdated: firebase.database.ServerValue.TIMESTAMP
     });
+
+    // Lưu vào bảng usernames
+    await usernamesRef.child(finalUsername).set(user.uid);
     
-    console.log('✅ Đã lưu email username:', emailUsername);
+    console.log('✅ Đã tạo username tự động:', finalUsername);
     
     elements.displayNameContainer.classList.add('hidden');
-    proceedToGame(user, emailUsername);
+    proceedToGame(user, finalUsername);
     
   } catch (error) {
     console.error('❌ Lỗi skip displayName:', error);
@@ -294,23 +305,30 @@ export async function proceedToGame(user, displayName) {
   const { setGameDifficulty } = await import('./game.js');
   setGameDifficulty('easy');
   
- if (user.email === ADMIN_EMAIL) {
-  console.log("👑 Admin đăng nhập qua user login, bật giao diện admin");
-  elements.adminLoginContainer.classList.remove("hidden");
-  updateGameState({ isAdminLoggedIn: true });
+  if (user.email === ADMIN_EMAIL) {
+    console.log("👑 Admin đăng nhập qua user login, bật giao diện admin");
+    elements.adminLoginContainer.classList.remove("hidden");
+    updateGameState({ isAdminLoggedIn: true });
 
+    // Import admin functions
+    const { showAdminButtons, loadAdminGuesses, loadGroupedGuesses } = await import('./admin.js');
+    const { loadLeaderboard } = await import('./admin.js');
 
-  setTimeout(() => {
-    showAdminButtons(); 
-    loadAdminGuesses();
-    loadGroupedGuesses();
-    loadLeaderboard();
-  }, 200);
+    setTimeout(() => {
+      showAdminButtons(); 
+      loadAdminGuesses();
+      loadGroupedGuesses();
+      loadLeaderboard();
+    }, 200);
+  }
 }
-}
+
 export async function postLoginSetup(user) {
   try {
     elements.authContainer.classList.add("hidden");
+    
+    // Reload user để đảm bảo lấy thông tin mới nhất
+    await user.reload();
     
     const hasDisplayName = await checkUserDisplayName(user);
     
@@ -326,8 +344,6 @@ export async function postLoginSetup(user) {
     elements.authMessage.textContent = 'Có lỗi xảy ra: ' + getFirebaseErrorMessage(error);
     elements.authMessage.classList.remove('hidden');
   }
-  await user.reload(); // đảm bảo lấy đúng trạng thái mới nhất
-
 }
 
 export function resetUIAfterLogout() {
@@ -358,7 +374,7 @@ export function resetUIAfterLogout() {
 }
 
 export function logoutUser() {
-  firebase.auth().signOut().then(() => { // Fixed: Use firebase.auth()
+  firebase.auth().signOut().then(() => {
     elements.fixedLogoutBtn.classList.add("hidden");
   }).catch(error => {
     console.error('❌ Lỗi đăng xuất:', error);
