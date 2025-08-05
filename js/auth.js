@@ -128,12 +128,33 @@ export async function checkUserDisplayName(user) {
 
 export async function saveDisplayName() {
   const displayName = elements.displayNameInput.value.trim();
-  const saveBtn = elements.saveDisplayNameBtn;
-  
-  if (!auth.currentUser) {
-    alert('❌ Có lỗi xảy ra, vui lòng thử lại');
+  const user = auth.currentUser;
+
+  if (!user || !displayName) return;
+
+  const usernamesRef = db.ref('usernames');
+  const snapshot = await usernamesRef.child(displayName).once('value');
+
+  if (snapshot.exists()) {
+    alert('⚠️ Tên hiển thị này đã được sử dụng. Vui lòng chọn tên khác!');
+    elements.displayNameInput.focus();
     return;
   }
+
+  // Nếu không trùng, tiếp tục lưu
+  await user.updateProfile({ displayName });
+
+  const userRef = db.ref(`users/${user.uid}`);
+  await userRef.update({
+    displayName: displayName,
+    email: user.email
+  });
+
+  // Ghi thêm vào bảng usernames để khóa tên lại
+  await usernamesRef.child(displayName).set(user.uid);
+
+  alert('✅ Tên hiển thị đã được lưu!');
+}
   
   if (!displayName) {
     alert('⚠️ Vui lòng nhập tên hiển thị!');
