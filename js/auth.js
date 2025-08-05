@@ -1,4 +1,4 @@
-// auth.js - Fixed version
+// auth.js - Fixed version with admin bypass
 import { auth, db, ADMIN_EMAIL } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState, resetGameState } from './game-state.js';
@@ -18,8 +18,14 @@ export async function signUp() {
     const userCred = await firebase.auth().createUserWithEmailAndPassword(email, password);
     console.log('✅ Tạo tài khoản thành công:', userCred.user.email);
 
-    await userCred.user.sendEmailVerification();
-    alert('📧 Một email xác thực đã được gửi đến hộp thư của bạn. Vui lòng xác minh trước khi đăng nhập.');
+    // Check if this is admin - no email verification needed
+    if (email === ADMIN_EMAIL) {
+      console.log('👑 Admin account - skipping email verification');
+      alert('🎉 Admin account created successfully! You can login immediately.');
+    } else {
+      await userCred.user.sendEmailVerification();
+      alert('📧 Một email xác thực đã được gửi đến hộp thư của bạn. Vui lòng xác minh trước khi đăng nhập.');
+    }
 
     await firebase.auth().signOut(); // Đăng xuất ngay
   } catch (e) {
@@ -45,12 +51,18 @@ export async function signIn() {
     const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
     const user = userCred.user;
 
-    // Kiểm tra email verification
-    if (!user.emailVerified) {
-      await firebase.auth().signOut();
-      elements.authMessage.textContent = '⚠️ Bạn cần xác minh email trước khi đăng nhập.';
-      elements.authMessage.classList.remove('hidden');
-      return;
+    // Check if this is admin - bypass email verification
+    if (email === ADMIN_EMAIL) {
+      console.log('👑 Admin login - bypassing email verification');
+      // Continue with login process regardless of email verification
+    } else {
+      // For regular users, check email verification
+      if (!user.emailVerified) {
+        await firebase.auth().signOut();
+        elements.authMessage.textContent = '⚠️ Bạn cần xác minh email trước khi đăng nhập.';
+        elements.authMessage.classList.remove('hidden');
+        return;
+      }
     }
 
     console.log('✅ Đăng nhập thành công:', user.email);
@@ -305,21 +317,44 @@ export async function proceedToGame(user, displayName) {
   const { setGameDifficulty } = await import('./game.js');
   setGameDifficulty('easy');
   
+  // Check if user is admin - NO SEPARATE LOGIN NEEDED
   if (user.email === ADMIN_EMAIL) {
-    console.log("👑 Admin đăng nhập qua user login, bật giao diện admin");
+    console.log("👑 Admin user detected - enabling admin features automatically");
     elements.adminLoginContainer.classList.remove("hidden");
     updateGameState({ isAdminLoggedIn: true });
 
-    // Import admin functions
-    const { showAdminButtons, loadAdminGuesses, loadGroupedGuesses } = await import('./admin.js');
-    const { loadLeaderboard } = await import('./admin.js');
+    // Import admin functions and enable them automatically
+    const { loadGroupedGuesses, loadLeaderboard } = await import('./admin.js');
 
+    // Show admin buttons immediately - no separate login required
     setTimeout(() => {
-      showAdminButtons(); 
-      loadAdminGuesses();
+      const adminButtons = ['adminLogoutBtn', 'deleteBtn', 'loadGroupedBtn'];
+      adminButtons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.classList.remove('hidden');
+          btn.style.display = 'inline-block';
+        }
+      });
+      
+      // Show admin welcome message
+      const adminContainer = document.getElementById('adminLoginContainer');
+      if (adminContainer) {
+        const welcomeMsg = document.createElement('div');
+        welcomeMsg.innerHTML = `
+          <div style="background: rgba(46, 204, 113, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #2ecc71;">
+            <h4 style="margin: 0 0 10px 0; color: #2ecc71; font-size: 1.3rem;">👑 Admin Panel</h4>
+            <p style="margin: 0; color: #eef2f7; font-size: 1rem;">Chào mừng <strong>${displayName}</strong>! Các tính năng admin đã được kích hoạt.</p>
+            <p style="margin: 8px 0 0 0; color: #95a5a6; font-size: 0.9rem;">Bạn có thể chơi game bình thường và sử dụng các công cụ quản trị.</p>
+          </div>
+        `;
+        adminContainer.insertBefore(welcomeMsg, adminContainer.firstChild);
+      }
+      
+      // Load admin data automatically (only the statistics)
       loadGroupedGuesses();
       loadLeaderboard();
-    }, 200);
+    }, 500);
   }
 }
 

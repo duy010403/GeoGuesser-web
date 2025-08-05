@@ -1,4 +1,4 @@
-// main.js - Entry point and event listeners (Updated version)
+// main.js - Final clean version
 import { auth } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState } from './game-state.js';
@@ -21,10 +21,8 @@ import {
   viewOnGoogleMap 
 } from './game.js';
 import { 
-  adminLogin, 
-  adminLogout, 
+  adminLogout,
   deleteAllScores, 
-  loadAdminGuesses, 
   loadGroupedGuesses,
   loadLeaderboard 
 } from './admin.js';
@@ -170,22 +168,10 @@ function initGameListeners() {
   }
 }
 
-// Admin event listeners
+// Admin event listeners - SIMPLIFIED (no separate login)
 function initAdminListeners() {
   console.log('🔧 Initializing admin listeners...');
   
-  const adminLoginBtn = document.getElementById('adminLoginBtn');
-  if (adminLoginBtn) {
-    adminLoginBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('🔐 Admin login button clicked');
-      adminLogin();
-    });
-    console.log('✅ Admin login button listener added');
-  } else {
-    console.log('❌ Admin login button not found');
-  }
-
   const adminLogoutBtn = document.getElementById('adminLogoutBtn');
   if (adminLogoutBtn) {
     adminLogoutBtn.addEventListener('click', (e) => {
@@ -210,52 +196,16 @@ function initAdminListeners() {
     console.log('❌ Delete button not found');
   }
 
-  const loadGuessesBtn = document.getElementById('loadGuessesBtn');
-  if (loadGuessesBtn) {
-    loadGuessesBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('📊 Load guesses button clicked');
-      loadAdminGuesses();
-    });
-    console.log('✅ Load guesses button listener added');
-  } else {
-    console.log('❌ Load guesses button not found');
-  }
-
   const loadGroupedBtn = document.getElementById('loadGroupedBtn');
   if (loadGroupedBtn) {
     loadGroupedBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log('📅 Load grouped button clicked');
+      console.log('📅 Load grouped statistics button clicked');
       loadGroupedGuesses();
     });
-    console.log('✅ Load grouped button listener added');
+    console.log('✅ Load grouped statistics button listener added');
   } else {
     console.log('❌ Load grouped button not found');
-  }
-
-  // Enter key handlers for admin inputs
-  const adminEmail = document.getElementById('adminEmail');
-  const adminPassword = document.getElementById('adminPassword');
-  
-  if (adminEmail) {
-    adminEmail.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        adminLogin();
-      }
-    });
-    console.log('✅ Admin email enter key listener added');
-  }
-  
-  if (adminPassword) {
-    adminPassword.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        adminLogin();
-      }
-    });
-    console.log('✅ Admin password enter key listener added');
   }
 }
 
@@ -263,7 +213,6 @@ function initAdminListeners() {
 function initAuthStateListener() {
   console.log('🔐 Initializing auth state listener...');
   
-  // Fixed: Use firebase.auth() instead of auth
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
       if (elements.fixedLogoutBtn) {
@@ -291,10 +240,8 @@ window.submitGuess = submitGuess;
 window.resetGame = resetGame;
 window.viewOnGoogleMap = viewOnGoogleMap;
 window.logoutUser = logoutUser;
-window.adminLogin = adminLogin;
 window.adminLogout = adminLogout;
 window.deleteAllScores = deleteAllScores;
-window.loadAdminGuesses = loadAdminGuesses;
 window.loadGroupedGuesses = loadGroupedGuesses;
 
 // Initialize application
@@ -344,8 +291,8 @@ function initApp() {
 // Debug function to check admin elements
 function checkAdminElements() {
   const adminElements = [
-    'adminLoginBtn', 'adminLogoutBtn', 'deleteBtn', 
-    'loadGuessesBtn', 'loadGroupedBtn', 'adminEmail', 'adminPassword'
+    'adminLogoutBtn', 'deleteBtn', 
+    'loadGroupedBtn', 'adminEmail', 'adminPassword'
   ];
   
   console.log('🔍 Checking admin elements:');
@@ -361,18 +308,11 @@ function debugAdminElements() {
   
   const adminElements = [
     'adminLoginContainer',
-    'adminSection', 
-    'adminEmail',
-    'adminPassword',
-    'adminLoginBtn',
     'adminLogoutBtn',
     'deleteBtn',
-    'loadGuessesBtn',
     'loadGroupedBtn',
     'adminControls',
-    'adminGuessesContainer',
-    'adminHistoryGrouped',
-    'adminGuessesBody'
+    'adminHistoryGrouped'
   ];
   
   adminElements.forEach(id => {
@@ -393,7 +333,6 @@ function forceShowAdminElements() {
   const elementsToShow = [
     'adminLogoutBtn',
     'deleteBtn', 
-    'loadGuessesBtn',
     'loadGroupedBtn',
     'adminControls'
   ];
@@ -454,4 +393,4 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('❌ Unhandled promise rejection:', e.reason);
 });
 
-console.log('📱 Main.js loaded successfully');
+console.log('📱 Final Main.js loaded successfully - Clean admin version');

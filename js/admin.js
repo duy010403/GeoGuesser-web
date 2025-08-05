@@ -1,270 +1,443 @@
-// admin.js - Updated version with new leaderboard integration
+// admin.js - Clean version focused on date statistics only
 import { auth, db } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState } from './game-state.js';
-import { ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 function showAdminButtons() {
-  document.getElementById('adminLogoutBtn')?.classList.remove('hidden');
-  document.getElementById('deleteBtn')?.classList.remove('hidden');
-  document.getElementById('loadGuessesBtn')?.classList.remove('hidden');
-  document.getElementById('loadGroupedBtn')?.classList.remove('hidden');
-}
-
-export function adminLogin() {
-  const adminEmail = document.getElementById('adminEmail');
-  const adminPassword = document.getElementById('adminPassword');
+  const buttonIds = ['adminLogoutBtn', 'deleteBtn', 'loadGroupedBtn'];
   
-  if (!adminEmail || !adminPassword) {
-    console.error('❌ Admin input elements not found');
-    alert('Lỗi: Không tìm thấy form đăng nhập admin!');
-    return;
-  }
-  
-  const email = adminEmail.value.trim();
-  const pass = adminPassword.value;
-  
-  console.log('🔐 Attempting admin login for:', email);
-  
-  if (!email || !pass) {
-    alert('Vui lòng nhập đầy đủ email và mật khẩu!');
-    return;
-  }
-  
-  auth.signInWithEmailAndPassword(email, pass)
-    .then(() => {
-      console.log('✅ Admin đăng nhập thành công');
-      
-      // Đợi DOM render xong trước khi thao tác
-      setTimeout(() => {
-        showAdminButtons();
-        updateGameState({ isAdminLoggedIn: true });
-        loadAdminGuesses();
-        loadGroupedGuesses();
-        loadLeaderboard();
-      }, 100);
-      
-      alert('Đăng nhập admin thành công!');
-    })
-    .catch((error) => {
-      console.error('❌ Admin login error:', error);
-      alert('Sai thông tin đăng nhập! ' + error.message);
-    });
+  buttonIds.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.classList.remove('hidden');
+      btn.style.display = 'inline-block';
+      console.log(`✅ Showed admin button: ${id}`);
+    } else {
+      console.error(`❌ Button not found: ${id}`);
+    }
+  });
 }
 
 export function adminLogout() {
-  auth.signOut().then(() => {
-    console.log('✅ Admin đăng xuất thành công');
-    
-    // Hide admin buttons
-    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-    if (adminLogoutBtn) {
-      adminLogoutBtn.classList.add('hidden');
+  if (!confirm('🤔 Bạn có chắc muốn đăng xuất admin không?')) {
+    return;
+  }
+
+  console.log('✅ Admin đăng xuất');
+  
+  // Hide admin buttons
+  const adminButtons = ['adminLogoutBtn', 'deleteBtn', 'loadGroupedBtn'];
+  adminButtons.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.classList.add('hidden');
+      btn.style.display = 'none';
     }
-    
-    const deleteBtn = document.getElementById('deleteBtn');
-    if (deleteBtn) {
-      deleteBtn.classList.add('hidden');
-    }
-    
-    const loadGuessesBtn = document.getElementById('loadGuessesBtn');
-    if (loadGuessesBtn) {
-      loadGuessesBtn.classList.add('hidden');
-    }
-    
-    const loadGroupedBtn = document.getElementById('loadGroupedBtn');
-    if (loadGroupedBtn) {
-      loadGroupedBtn.classList.add('hidden');
-    }
-    
-    // Hide admin data containers
-    if (elements.adminGuessesContainer) {
-      elements.adminGuessesContainer.style.display = 'none';
-    }
-    if (elements.adminHistoryGrouped) {
-      elements.adminHistoryGrouped.style.display = 'none';
-    }
-    
-    // Clear input fields
-    const adminEmail = document.getElementById('adminEmail');
-    const adminPassword = document.getElementById('adminPassword');
-    if (adminEmail) adminEmail.value = '';
-    if (adminPassword) adminPassword.value = '';
-    
-    alert('Đã đăng xuất admin!');
-    updateGameState({ isAdminLoggedIn: false });
-  }).catch(error => {
-    console.error('❌ Admin logout error:', error);
-    alert('Lỗi khi đăng xuất: ' + error.message);
   });
+  
+  // Hide admin data containers
+  if (elements.adminHistoryGrouped) {
+    elements.adminHistoryGrouped.classList.add('hidden');
+    elements.adminHistoryGrouped.style.display = 'none';
+  }
+  
+  // Hide admin container
+  elements.adminLoginContainer.classList.add('hidden');
+  
+  updateGameState({ isAdminLoggedIn: false });
+  alert('🚪 Đã đăng xuất admin! Admin features sẽ được kích hoạt lại khi bạn đăng nhập lại.');
 }
 
 export function deleteAllScores() {
-  if (confirm("Bạn có chắc muốn xóa toàn bộ bảng điểm?")) {
-    db.ref("scores").remove()
-      .then(() => {
-        alert("Đã xóa toàn bộ điểm!");
-        loadLeaderboard(); // Reload leaderboard after deletion
-      })
-      .catch((err) => {
-        console.error('❌ Error deleting scores:', err);
-        alert("Lỗi: " + err.message);
-      });
-  }
-}
-
-export function loadAdminGuesses() {
-  console.log('🔄 Loading admin guesses...');
+  // Enhanced confirmation for safety
+  const confirmMessage = `⚠️ CẢNH BÁO: Bạn sắp xóa toàn bộ điểm số của tất cả người chơi!
   
-  db.ref("guesses").orderByChild("timestamp").limitToLast(100).once("value", snapshot => {
-    if (!elements.adminGuessesBody) {
-      console.log('❌ Admin guesses body element not found');
-      return;
-    }
-    
-    elements.adminGuessesBody.innerHTML = "";
-    
-    const guesses = [];
-    snapshot.forEach(child => {
-      guesses.push(child.val());
+Hành động này KHÔNG THỂ HOÀN TÁC!
+
+Để xác nhận, vui lòng nhập chính xác: DELETE ALL SCORES`;
+
+  const userInput = prompt(confirmMessage);
+  
+  if (userInput !== 'DELETE ALL SCORES') {
+    alert('❌ Xác nhận không chính xác. Hủy bỏ thao tác xóa.');
+    return;
+  }
+
+  const deleteBtn = document.getElementById('deleteBtn');
+  if (deleteBtn) {
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = '⏳ Đang xóa...';
+  }
+
+  db.ref("scores").remove()
+    .then(() => {
+      alert("✅ Đã xóa toàn bộ điểm thành công!");
+      console.log('✅ All scores deleted successfully');
+      
+      // Reload leaderboard after deletion
+      setTimeout(() => {
+        loadLeaderboard();
+      }, 1000);
+    })
+    .catch((err) => {
+      console.error('❌ Error deleting scores:', err);
+      alert("❌ Lỗi khi xóa điểm: " + err.message);
+    })
+    .finally(() => {
+      if (deleteBtn) {
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = '🗑️ Xóa tất cả điểm';
+      }
     });
-    
-    console.log(`📊 Loaded ${guesses.length} guesses`);
-    
-    // Reverse to show newest first
-    guesses.reverse().forEach(g => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${g.name || 'N/A'}</td>
-        <td>${g.difficulty || 'N/A'}</td>
-        <td>${g.actualLat?.toFixed(4) || 'N/A'}, ${g.actualLng?.toFixed(4) || 'N/A'}</td>
-        <td>${g.guessLat?.toFixed(4) || 'N/A'}, ${g.guessLng?.toFixed(4) || 'N/A'}</td>
-        <td>${g.distance?.toFixed(2) || 'N/A'} km</td>
-        <td>${g.timestamp ? new Date(g.timestamp).toLocaleString('vi-VN') : 'N/A'}</td>
-      `;
-      elements.adminGuessesBody.appendChild(row);
-    });
-    
-    if (elements.adminGuessesContainer) {
-      elements.adminGuessesContainer.style.display = 'block';
-      console.log('✅ Admin guesses container shown');
-    }
-  }).catch(error => {
-    console.error('❌ Error loading admin guesses:', error);
-    alert('Lỗi khi tải dữ liệu: ' + error.message);
-  });
 }
 
 export function loadGroupedGuesses() {
-  console.log("🔄 Loading grouped guesses...");
-  const container = document.getElementById("adminHistoryGrouped");
-  container.innerHTML = "";
+  console.log("📅 Loading grouped statistics...");
+  
+  const loadBtn = document.getElementById('loadGroupedBtn');
+  if (loadBtn) {
+    loadBtn.disabled = true;
+    loadBtn.textContent = '⏳ Đang tải...';
+  }
 
-  const today = new Date();
-  const todayStr = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+  const container = document.getElementById("adminHistoryGrouped");
+  if (!container) {
+    console.error('❌ Admin history container not found');
+    return;
+  }
+
+  // Clear container and show loading
+  container.innerHTML = `
+    <div style="text-align: center; padding: 30px;">
+      <div style="font-size: 2rem; margin-bottom: 15px;">⏳</div>
+      <div>Đang tải thống kê theo ngày...</div>
+    </div>
+  `;
 
   db.ref("guesses").orderByChild("timestamp").once("value", snapshot => {
     const allGuesses = [];
     snapshot.forEach(child => {
-      allGuesses.push(child.val());
+      const data = child.val();
+      if (data && data.timestamp) {
+        allGuesses.push(data);
+      }
     });
 
+    console.log(`📊 Processing ${allGuesses.length} total guesses`);
+
+    if (allGuesses.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 60px;">
+          <div style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;">📅</div>
+          <h3 style="color: #06b6d4; margin-bottom: 15px;">Chưa có dữ liệu thống kê</h3>
+          <p style="opacity: 0.8; margin: 0;">Bắt đầu chơi game để xem thống kê tại đây!</p>
+        </div>
+      `;
+      container.classList.remove("hidden");
+      container.style.display = "block";
+      return;
+    }
+
+    // Group by date
     const groupedByDate = {};
     allGuesses.forEach(g => {
-      if (!g.timestamp) return;
       const date = new Date(g.timestamp);
-      const dateStr = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-      if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
+      const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+      
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = [];
+      }
       groupedByDate[dateStr].push(g);
     });
 
+    // Sort dates (newest first)
     const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
       const [d1, m1, y1] = a.split('/').map(Number);
       const [d2, m2, y2] = b.split('/').map(Number);
       return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
     });
 
-    sortedDates.forEach(date => {
-      const guesses = groupedByDate[date];
+    // Create date picker interface
+    container.innerHTML = `
+      <div style="background: rgba(255,255,255,0.08); padding: 25px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);">
+        <h4 style="margin: 0 0 20px 0; color: #06b6d4; font-size: 1.4rem; text-align: center;">📅 Thống kê theo ngày</h4>
+        
+        <div style="display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="font-weight: 600; color: #eef2f7;">Chọn ngày:</label>
+            <select id="dateSelector" style="padding: 10px 15px; border-radius: 8px; border: 1px solid #4f6f8f; background: #1f2f45; color: #eef2f7; font-size: 1rem; min-width: 150px;">
+              <option value="">-- Chọn ngày --</option>
+              ${sortedDates.map(date => `<option value="${date}">${date}</option>`).join('')}
+            </select>
+          </div>
+          
+          <button id="showTodayBtn" class="green" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+            📅 Hôm nay
+          </button>
+          
+          <button id="showAllDatesBtn" class="blue" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+            📂 Tất cả ngày
+          </button>
+        </div>
+        
+        <div style="text-align: center; font-size: 0.9rem; color: #95a5a6; margin-top: 15px;">
+          💡 Có dữ liệu cho <strong>${sortedDates.length}</strong> ngày • Từ ${sortedDates[sortedDates.length - 1]} đến ${sortedDates[0]}
+        </div>
+      </div>
+      
+      <div id="dateDataContainer">
+        <div style="text-align: center; padding: 50px; opacity: 0.7;">
+          <div style="font-size: 3rem; margin-bottom: 20px;">👆</div>
+          <h3 style="color: #06b6d4; margin-bottom: 10px;">Chọn ngày để xem thống kê</h3>
+          <p style="margin: 0; opacity: 0.8;">Sử dụng dropdown hoặc các nút bên trên</p>
+        </div>
+      </div>
+    `;
 
-      const users = {};
-      guesses.forEach(g => {
-        const key = (g.name || 'N/A').trim().toLowerCase();
-        if (!users[key]) {
-          users[key] = {
-            name: g.name?.trim() || 'N/A',
-            plays: 0,
-            totalScore: 0
-          };
-        }
-        users[key].plays += 1;
-        users[key].totalScore += g.score || 0;
-      });
+    // Add event listeners
+    const dateSelector = document.getElementById('dateSelector');
+    const showAllBtn = document.getElementById('showAllDatesBtn');
+    const showTodayBtn = document.getElementById('showTodayBtn');
+    const dataContainer = document.getElementById('dateDataContainer');
 
-      const groupDiv = document.createElement("div");
-      groupDiv.className = "group-table";
-      groupDiv.dataset.date = date;
-
-      // ❗ Chỉ hiển thị hôm nay, còn lại ẩn đi
-      if (date !== todayStr) {
-        groupDiv.style.display = "none";
+    // Function to display data for specific dates
+    function displayDateData(datesToShow) {
+      if (datesToShow.length === 0) {
+        dataContainer.innerHTML = `
+          <div style="text-align: center; padding: 50px; opacity: 0.7;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📅</div>
+            <h3 style="color: #f39c12; margin-bottom: 10px;">Không có dữ liệu</h3>
+            <p style="margin: 0;">Không có dữ liệu cho ngày được chọn</p>
+          </div>
+        `;
+        return;
       }
 
-      groupDiv.innerHTML = `
-        <h3 style="margin-top:30px; color: #fff;">📅 Ngày: ${date}</h3>
-        <table style="width: 100%; border-collapse: collapse; margin: 10px 0; text-align: center; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.04);">
-          <thead style="background-color: #334155; color: white;">
-            <tr>
-              <th style="padding:12px;">👤 Người chơi</th>
-              <th style="padding:12px;">🔁 Số lần chơi</th>
-              <th style="padding:12px;">💯 Tổng điểm</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${Object.values(users).map((u, i) => `
-              <tr style="background-color: ${i % 2 === 0 ? '#1e293b' : '#0f172a'}; color: #f1f5f9;">
-                <td style="padding:10px;">${u.name}</td>
-                <td style="padding:10px;">${u.plays}</td>
-                <td style="padding:10px;">${u.totalScore}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      `;
+      let html = '';
+      datesToShow.forEach(date => {
+        const guesses = groupedByDate[date];
+        
+        // Aggregate user stats for this date
+        const userStats = {};
+        let totalGames = 0;
+        let totalScore = 0;
+        
+        guesses.forEach(guess => {
+          const userName = (guess.name || 'Unknown').trim();
+          const key = userName.toLowerCase();
+          
+          if (!userStats[key]) {
+            userStats[key] = {
+              name: userName,
+              plays: 0,
+              totalScore: 0,
+              avgDistance: 0,
+              totalDistance: 0,
+              bestScore: 0,
+              difficulties: { easy: 0, medium: 0, hard: 0 }
+            };
+          }
+          
+          userStats[key].plays += 1;
+          userStats[key].totalScore += guess.score || 0;
+          userStats[key].totalDistance += guess.distance || 0;
+          userStats[key].bestScore = Math.max(userStats[key].bestScore, guess.score || 0);
+          
+          if (guess.difficulty) {
+            userStats[key].difficulties[guess.difficulty] = (userStats[key].difficulties[guess.difficulty] || 0) + 1;
+          }
+          
+          totalGames++;
+          totalScore += guess.score || 0;
+        });
+        
+        // Calculate averages
+        Object.values(userStats).forEach(user => {
+          user.avgDistance = user.plays > 0 ? (user.totalDistance / user.plays) : 0;
+        });
+        
+        const avgScorePerGame = totalGames > 0 ? Math.round(totalScore / totalGames) : 0;
+        const uniquePlayers = Object.keys(userStats).length;
+        
+        // Get today's date for comparison
+        const today = new Date();
+        const todayStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+        const isToday = date === todayStr;
 
-      container.appendChild(groupDiv);
+        // Create the statistics card matching the design in the image
+        html += `
+          <div style="margin: 25px 0; background: linear-gradient(135deg, #06b6d4, #0891b2); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.3); color: white;">
+            <!-- Header Section -->
+            <div style="padding: 25px; text-align: center; background: rgba(255,255,255,0.1);">
+              <h3 style="margin: 0; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                📅 ${date} ${isToday ? '(Hôm nay)' : ''}
+              </h3>
+              <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 1rem;">Thống kê chi tiết cho ngày này</p>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div style="display: flex; justify-content: space-around; padding: 20px; background: rgba(255,255,255,0.05);">
+              <div style="text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 5px;">${totalGames}</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Lượt chơi</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 5px;">${uniquePlayers}</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Người chơi</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 5px;">${avgScorePerGame}</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Điểm TB</div>
+              </div>
+            </div>
+            
+            <!-- Player Statistics Table -->
+            <div style="background: rgba(255,255,255,0.08); margin: 0;">
+              <!-- Table Header -->
+              <div style="display: grid; grid-template-columns: 80px 1fr 80px 100px 120px 100px 120px; gap: 10px; padding: 15px 20px; background: rgba(0,0,0,0.2); font-weight: 700; font-size: 0.9rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div>🏆<br>Xếp hạng</div>
+                <div style="text-align: left;">👤<br>Người chơi</div>
+                <div>🎮<br>Lượt chơi</div>
+                <div>💯<br>Tổng điểm</div>
+                <div>⭐<br>Điểm cao nhất</div>
+                <div>📏<br>KC trung bình</div>
+                <div>🎯<br>Độ khó</div>
+              </div>
+              
+              <!-- Player Rows -->
+              ${Object.values(userStats)
+                .sort((a, b) => b.totalScore - a.totalScore)
+                .map((user, index) => {
+                  const rank = index + 1;
+                  let rankDisplay = '';
+                  let rankStyle = '';
+                  
+                  if (rank === 1) {
+                    rankDisplay = '🥇';
+                    rankStyle = 'color: #FFD700; font-size: 1.8rem;';
+                  } else if (rank === 2) {
+                    rankDisplay = '🥈';
+                    rankStyle = 'color: #C0C0C0; font-size: 1.8rem;';
+                  } else if (rank === 3) {
+                    rankDisplay = '🥉';
+                    rankStyle = 'color: #CD7F32; font-size: 1.8rem;';
+                  } else {
+                    rankDisplay = `${rank}`;
+                    rankStyle = 'background: rgba(255,255,255,0.2); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: bold;';
+                  }
+                  
+                  const difficultyBadges = Object.entries(user.difficulties)
+                    .filter(([_, count]) => count > 0)
+                    .map(([diff, count]) => {
+                      const colors = {
+                        easy: '#2ecc71',
+                        medium: '#f1c40f', 
+                        hard: '#e74c3c'
+                      };
+                      const labels = {
+                        easy: 'dễ',
+                        medium: 'TB',
+                        hard: 'khó'
+                      };
+                      return `<span style="background: ${colors[diff]}; color: white; padding: 2px 6px; border-radius: 12px; font-size: 0.7rem; margin: 0 1px; font-weight: 600;">${labels[diff]}:${count}</span>`;
+                    }).join('');
+                  
+                  return `
+                    <div style="display: grid; grid-template-columns: 80px 1fr 80px 100px 120px 100px 120px; gap: 10px; padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; transition: all 0.3s ease; ${index % 2 === 0 ? 'background: rgba(255,255,255,0.03);' : ''}">
+                      <div style="text-align: center; ${rankStyle}">${rankDisplay}</div>
+                      <div style="font-weight: 600; text-align: left;">${user.name}</div>
+                      <div style="text-align: center; color: #67e8f9; font-weight: 600;">${user.plays}</div>
+                      <div style="text-align: center; color: #2ecc71; font-weight: 700; font-size: 1.1rem;">${user.totalScore.toLocaleString()}</div>
+                      <div style="text-align: center; color: #f39c12; font-weight: 600;">${user.bestScore}</div>
+                      <div style="text-align: center; color: #ff6b6b; font-weight: 600;">${user.avgDistance.toFixed(1)}km</div>
+                      <div style="text-align: center; font-size: 0.8rem;">${difficultyBadges || '<span style="opacity: 0.5;">-</span>'}</div>
+                    </div>
+                  `;
+                }).join('')}
+            </div>
+          </div>
+        `;
+      });
+      
+      dataContainer.innerHTML = html;
+    }
+
+    // Date selector change event
+    dateSelector.addEventListener('change', (e) => {
+      const selectedDate = e.target.value;
+      if (selectedDate) {
+        displayDateData([selectedDate]);
+      } else {
+        dataContainer.innerHTML = `
+          <div style="text-align: center; padding: 50px; opacity: 0.7;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">👆</div>
+            <h3 style="color: #06b6d4; margin-bottom: 10px;">Chọn ngày để xem thống kê</h3>
+            <p style="margin: 0; opacity: 0.8;">Sử dụng dropdown hoặc các nút bên trên</p>
+          </div>
+        `;
+      }
     });
 
-    // 📌 Nút hiển thị tất cả ngày khác
-    const showAllBtn = document.createElement("button");
-    showAllBtn.textContent = "📂 Chọn ngày khác";
-    showAllBtn.style = `
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #0ea5e9;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    `;
-    showAllBtn.onclick = () => {
-      document.querySelectorAll(".group-table").forEach(div => {
-        div.style.display = "block";
-      });
-      showAllBtn.remove();
-    };
-    container.appendChild(showAllBtn);
+    // Show all dates button
+    showAllBtn.addEventListener('click', () => {
+      dateSelector.value = '';
+      displayDateData(sortedDates.slice(0, 5)); // Limit to 5 most recent dates for performance
+    });
+
+    // Show today button
+    showTodayBtn.addEventListener('click', () => {
+      const today = new Date();
+      const todayStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+      
+      if (groupedByDate[todayStr]) {
+        dateSelector.value = todayStr;
+        displayDateData([todayStr]);
+      } else {
+        dataContainer.innerHTML = `
+          <div style="text-align: center; padding: 50px; opacity: 0.7;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📅</div>
+            <h3 style="color: #f39c12; margin-bottom: 15px;">Chưa có dữ liệu hôm nay</h3>
+            <p style="margin: 0; font-size: 1.1rem;">Ngày: <strong>${todayStr}</strong></p>
+            <p style="margin: 10px 0 0 0; opacity: 0.8;">Bắt đầu chơi để tạo dữ liệu!</p>
+          </div>
+        `;
+      }
+    });
+
+    // Initially show today's data if available
+    const today = new Date();
+    const todayStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    
+    if (groupedByDate[todayStr]) {
+      dateSelector.value = todayStr;
+      displayDateData([todayStr]);
+    }
 
     container.classList.remove("hidden");
     container.style.display = "block";
-    console.log("📊 Tổng số lượt đoán:", allGuesses.length);
-    console.log("✅ Hiển thị grouped history thành công");
+    
+    console.log("✅ Statistics loaded with improved date picker");
+    
+  }).catch(error => {
+    console.error('❌ Error loading statistics:', error);
+    container.innerHTML = `
+      <div style="text-align: center; padding: 50px;">
+        <div style="font-size: 3rem; margin-bottom: 20px; color: #e74c3c;">❌</div>
+        <h3 style="color: #e74c3c; margin-bottom: 15px;">Lỗi khi tải dữ liệu</h3>
+        <p style="margin: 0; opacity: 0.8;">${error.message}</p>
+      </div>
+    `;
+  }).finally(() => {
+    if (loadBtn) {
+      loadBtn.disabled = false;
+      loadBtn.textContent = '📅 Tải theo ngày';
+    }
   });
 }
 
-// Updated loadLeaderboard function with new UI integration
+// Updated loadLeaderboard function
 export function loadLeaderboard() {
-  console.log('🔄 Loading leaderboard...');
+  console.log('🏆 Loading leaderboard...');
   
   db.ref("scores").once("value", (snapshot) => {
     const scoreData = snapshot.val() || {};
@@ -305,37 +478,4 @@ export function loadLeaderboard() {
   });
 }
 
-// Function to show admin panel (called when user is admin)
-export function showAdminPanel() {
-  console.log('🔧 Showing admin panel...');
-  
-  const adminSection = document.getElementById('adminSection');
-  if (adminSection) {
-    adminSection.style.display = 'block';
-  }
-  
-  const adminControlsContainer = document.getElementById('adminControls');
-  if (adminControlsContainer) {
-    adminControlsContainer.style.display = 'block';
-  }
-  
-  // Auto-load admin data
-  loadAdminGuesses();
-  loadGroupedGuesses();
-  loadLeaderboard();
-}
-
-// Function to hide admin panel
-export function hideAdminPanel() {
-  console.log('🔧 Hiding admin panel...');
-  
-  const adminSection = document.getElementById('adminSection');
-  if (adminSection) {
-    adminSection.style.display = 'none';
-  }
-  
-  const adminControlsContainer = document.getElementById('adminControls');
-  if (adminControlsContainer) {
-    adminControlsContainer.style.display = 'none';
-  }
-}
+console.log('🔧 Clean admin module loaded - focused on date statistics only');

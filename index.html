@@ -46,19 +46,19 @@
       <h2>🎮 Thiết lập hồ sơ người chơi</h2>
       <p>Vui lòng đặt tên hiển thị cho tài khoản của bạn:</p>
       
-      <div style="max-width: 400px; margin: 20px auto;">
+      <div style="max-width: 500px; margin: 25px auto;">
         <input type="text" id="displayNameInput" placeholder="Nhập tên hiển thị..." 
-               maxlength="20" style="font-size: 1.1rem; padding: 15px; text-align: center;" />
-        <div class="small" style="text-align: center; margin-top: 10px;">
+               maxlength="20" style="font-size: 1.2rem; padding: 18px; text-align: center;" />
+        <div class="small" style="text-align: center; margin-top: 15px;">
           Tối đa 20 ký tự • Sẽ hiển thị trong bảng xếp hạng
         </div>
       </div>
       
-      <div class="flex flex-center" style="margin-top: 25px;">
-        <button id="saveDisplayNameBtn" class="green" style="font-size:1.1rem; padding:15px 30px;">
+      <div class="flex flex-center" style="margin-top: 35px;">
+        <button id="saveDisplayNameBtn" class="green" style="font-size:1.2rem; padding:18px 35px;">
           ✅ Lưu và tiếp tục
         </button>
-        <button id="skipDisplayNameBtn" class="yellow" style="padding:12px 20px;">
+        <button id="skipDisplayNameBtn" class="yellow" style="padding:15px 25px;">
           ⏭️ Bỏ qua
         </button>
       </div>
@@ -87,14 +87,14 @@
         </div>
       </div>
       
-      <div class="flex flex-center" style="margin-top: 30px;">
+      <div class="flex flex-center" style="margin-top: 40px;">
         <button id="btnEasy" data-difficulty="easy" class="green">🟢 Dễ</button>
         <button id="btnMedium" data-difficulty="medium" class="yellow">🟡 Trung bình</button>
         <button id="btnHard" data-difficulty="hard" class="red">🔴 Khó</button>
       </div>
       
-      <div style="text-align: center; margin-top: 20px;">
-        <button id="startGameBtn" class="blue" style="font-size:1.1rem; padding:15px 30px;">
+      <div style="text-align: center; margin-top: 30px;">
+        <button id="startGameBtn" class="blue" style="font-size:1.2rem; padding:18px 40px;">
           🚀 Bắt đầu chơi
         </button>
       </div>
@@ -102,15 +102,15 @@
 
     <!-- GAME CONTAINER -->
     <div id="gameContainer" class="card hidden">
-      <div class="flex" style="align-items: center; margin-bottom: 20px;">
+      <div class="flex" style="align-items: center; margin-bottom: 30px; justify-content: center;">
         <h2 style="margin: 0;">Chào <span id="playerNameDisplay"></span>!</h2>
         <span id="currentDifficultyBadge" class="badge green">EASY</span>
         <div style="margin-left: auto;">
-          <span style="font-size: 1.2rem; font-weight: 600;">💯 Điểm: <span id="score">0</span></span>
+          <span style="font-size: 1.4rem; font-weight: 600;">💯 Điểm: <span id="score">0</span></span>
         </div>
       </div>
 
-      <div id="mapPreview" style="width: 100%; height: 450px; margin-bottom:20px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3);"></div>
+      <div id="mapPreview" style="width: 100%; height: 500px; margin-bottom:30px; border-radius: 15px; overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.4);"></div>
 
       <div class="flex flex-center">
         <button id="showGuessMapBtn" class="blue hidden">🗺️ Đoán vị trí</button>
@@ -119,11 +119,11 @@
         <button id="replayBtn" class="purple hidden">🔄 Chơi lại</button>
       </div>
       
-      <div id="guessMapContainer" style="display: none; width: 100%; height: 350px; margin-top:20px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
+      <div id="guessMapContainer" style="display: none; width: 100%; height: 400px; margin-top:30px; border-radius: 15px; overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.4);">
         <div id="guessMap" style="width:100%; height:100%;"></div>
       </div>
       
-      <div id="result" class="status-info hidden" style="margin-top: 20px; font-size: 1.1rem;"></div>
+      <div id="result" class="status-info hidden" style="margin-top: 25px; font-size: 1.2rem;"></div>
     </div>
 
     <!-- NEW LEADERBOARD -->
@@ -207,43 +207,19 @@
     <!-- ADMIN SECTION -->
     <div id="adminLoginContainer" class="card hidden">
       <h3>🔧 Bảng điều khiển Admin</h3>
-      <div style="max-width: 400px;">
-        <input type="email" id="adminEmail" placeholder="Email admin" />
-        <input type="password" id="adminPassword" placeholder="Mật khẩu admin" />
-        
-        <div class="flex" style="margin-top: 15px;">
-          <button id="adminLoginBtn" class="purple">🔐 Đăng nhập</button>
-          <button id="adminLogoutBtn" class="yellow hidden">🚪 Đăng xuất</button>
-          <button id="deleteBtn" class="red hidden">🗑️ Xóa điểm</button>
-        </div>
-        
-        <div class="flex" style="margin-top: 10px;">
-          <button id="loadGuessesBtn" class="blue hidden">📊 Tải lịch sử</button>
-          <button id="loadGroupedBtn" class="purple hidden">📅 Tải theo ngày</button>
+      
+      <!-- Admin controls - shown when admin is logged in -->
+      <div id="adminControls" style="display: none;">
+        <div class="flex" style="margin-bottom: 20px; justify-content: center;">
+          <button id="adminLogoutBtn" class="yellow hidden">🚪 Đăng xuất Admin</button>
+          <button id="deleteBtn" class="red hidden">🗑️ Xóa tất cả điểm</button>
+          <button id="loadGroupedBtn" class="purple hidden">📅 Thống kê theo ngày</button>
         </div>
       </div>
 
-      <div id="adminGuessesContainer" class="hidden" style="margin-top: 30px;">
-        <h3 style="text-align:center;">📊 Lịch sử chi tiết (100 lần gần nhất)</h3>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>👤 Người chơi</th>
-                <th>🎯 Độ khó</th>
-                <th>📍 Tọa độ thật</th>
-                <th>❓ Tọa độ đoán</th>
-                <th>📏 Khoảng cách</th>
-                <th>🕒 Thời gian</th>
-              </tr>
-            </thead>
-            <tbody id="adminGuessesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="adminHistoryGrouped" class="hidden" style="margin-top: 30px;">
-        <h3 style="text-align:center;">📅 Lịch sử theo ngày</h3>
+      <!-- Only keep the grouped statistics section -->
+      <div id="adminHistoryGrouped" class="hidden" style="margin-top: 40px;">
+        <!-- Content will be populated by JavaScript -->
       </div>
     </div>
 
