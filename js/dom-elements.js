@@ -41,6 +41,9 @@ export const elements = {
   logoutBtn: document.getElementById('logoutBtn'),
   adminGuessesContainer: document.getElementById("adminGuessesContainer"),
   adminHistoryGrouped: document.getElementById("adminHistoryGrouped"),
-  adminGuessesBody: document.getElementById("adminGuessesBody")
-  
+  adminGuessesBody: document.getElementById("adminGuessesBody"),
+  progressBar: document.getElementById('progressBar'),
+  progressTime: document.getElementById('progressTime'),
+
+
 };

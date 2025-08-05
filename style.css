@@ -748,3 +748,40 @@ a:hover { color: #67e8f9; }
     font-size: 1.7rem;
   }
 }
+.glow-selected {
+  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  z-index: 1;
+}
+
+#progressContainer {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 20px;
+  background-color: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+#progressBar {
+  height: 100%;
+  width: 100%;
+  background-color: orange;
+  transition: width 1s linear;
+}
+
+#progressTime {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: bold;
+  color: black;
+  z-index: 11;
+}
+

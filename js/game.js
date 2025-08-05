@@ -13,6 +13,13 @@ export function setGameDifficulty(level) {
     else if (level === 'medium') elements.currentDifficultyBadge.classList.add("yellow");
     else if (level === 'hard') elements.currentDifficultyBadge.classList.add("red");
   }
+   const allButtons = document.querySelectorAll('[data-difficulty]');
+  allButtons.forEach(btn => btn.classList.remove('glow-selected'));
+
+  const selectedBtn = document.querySelector(`[data-difficulty="${level}"]`);
+  if (selectedBtn) {
+    selectedBtn.classList.add('glow-selected');
+  }
 }
 
 export function startGame() {
@@ -159,7 +166,7 @@ export async function generateNewLocation(level) {
           elements.mapPreview, 
           panoramaOptions
         );
-
+        startTimer();
         elements.showGuessMapBtn.classList.remove('hidden');
         elements.submitGuessBtn.classList.add('hidden');
         elements.guessMapContainer.style.display = 'none';
@@ -323,6 +330,10 @@ export function resetGame() {
   if (elements.mapPreview) {
     elements.mapPreview.innerHTML = '';
   }
+if (countdownInterval) clearInterval(countdownInterval);
+if (elements.progressBar) elements.progressBar.style.width = '100%';
+if (elements.progressTime) elements.progressTime.textContent = '03:00';
+
 
   elements.gameContainer.classList.add("hidden");
   elements.difficultyContainer.classList.remove("hidden");
@@ -357,4 +368,72 @@ function haversineDistance(c1, c2) {
 
 function toRad(x) { 
   return x * Math.PI / 180; 
+}
+let countdownInterval;
+let timeLeft = 180; 
+function startTimer() {
+  timeLeft = 180;
+  updateProgressBar();
+
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  countdownInterval = setInterval(() => {
+    timeLeft--;
+    updateProgressBar();
+
+    if (timeLeft <= 0) {
+      clearInterval(countdownInterval);
+      handleTimeOut();
+    }
+  }, 1000);
+}
+
+function updateProgressBar() {
+  const percentage = (timeLeft / 180) * 100;
+  if (elements.progressBar) {
+    elements.progressBar.style.width = `${percentage}%`;
+  }
+
+  const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  const seconds = (timeLeft % 60).toString().padStart(2, '0');
+  if (elements.progressTime) {
+    elements.progressTime.textContent = `${minutes}:${seconds}`;
+  }
+}
+function handleTimeOut() {
+  if (!gameState.guessLocation && gameState.actualLocation) {
+    if (elements.result) {
+      elements.result.textContent = `⏰ Đã hết giờ! Bạn không chọn vị trí nào.`;
+      elements.result.classList.remove('hidden');
+    }
+
+    const actualMarker = new google.maps.Marker({
+      position: gameState.actualLocation,
+      map: gameState.guessMap,
+      icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" },
+      title: "Vị trí thật"
+    });
+    updateGameState({ actualMarker });
+
+    // Điểm = 0
+    if (elements.score) elements.score.textContent = gameState.score;
+    elements.submitGuessBtn?.classList.add('hidden');
+    elements.viewOnGoogleMapBtn?.classList.remove('hidden');
+    elements.replayBtn?.classList.remove('hidden');
+
+    saveScore();
+
+    const guessData = {
+      actualLat: gameState.actualLocation.lat(),
+      actualLng: gameState.actualLocation.lng(),
+      guessLat: null,
+      guessLng: null,
+      distance: null,
+      difficulty: gameState.currentDifficulty,
+      name: gameState.playerName,
+      timestamp: Date.now()
+    };
+
+    db.ref("guesses").push(guessData);
+  }
 }
