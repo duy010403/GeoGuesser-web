@@ -32,6 +32,34 @@
         
         <div id="authMessage" class="status-error hidden"></div>
         
+        <!-- Forgot Password Link -->
+        <div class="divider">
+          <span>hoặc</span>
+        </div>
+        
+        <a href="#" id="forgotPasswordLink" class="auth-link">
+          🔑 Quên mật khẩu? Nhấn để khôi phục
+        </a>
+        
+        <!-- Forgot Password Container -->
+        <div id="forgotPasswordContainer" class="forgot-password-container hidden">
+          <h3 style="margin-top: 0; color: #06b6d4; text-align: center;">
+            🔑 Khôi phục mật khẩu
+          </h3>
+          <p style="text-align: center; color: #95a5a6; font-size: 0.95rem; margin-bottom: 25px;">
+            Nhập email của bạn để nhận liên kết đặt lại mật khẩu
+          </p>
+          
+          <input type="email" id="resetEmail" placeholder="Nhập email cần khôi phục..." style="margin-bottom: 20px;" />
+          
+          <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <button id="sendResetBtn" class="blue">📧 Gửi email khôi phục</button>
+            <button id="cancelResetBtn" class="gray">❌ Hủy bỏ</button>
+          </div>
+          
+          <div id="resetMessage" class="status-info hidden" style="margin-top: 20px;"></div>
+        </div>
+        
         <div id="loggedInInfo" class="status-success hidden auth-info">
           <div>
             Chào mừng: <strong><span id="displayName"></span></strong>
@@ -102,10 +130,10 @@
 
     <!-- GAME CONTAINER -->
     <div id="gameContainer" class="card hidden">
-    <div id="progressContainer">
-  <div id="progressBar"></div>
-  <div id="progressTime">03:00</div>
-</div>
+      <div id="progressContainer">
+        <div id="progressBar"></div>
+          <div id="progressTime">03:00</div>
+      </div>
 
       <div class="flex" style="align-items: center; margin-bottom: 30px; justify-content: center;">
         <h2 style="margin: 0;">Chào <span id="playerNameDisplay"></span>!</h2>

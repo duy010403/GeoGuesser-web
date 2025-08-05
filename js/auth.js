@@ -1,7 +1,25 @@
-// auth.js - Fixed version with admin bypass
+// auth.js - Enhanced version with forgot password feature
 import { auth, db, ADMIN_EMAIL } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState, resetGameState } from './game-state.js';
+
+// Helper function to show messages
+function showMessage(element, message, type = 'info', duration = 5000) {
+  element.className = `status-message status-${type}`;
+  element.textContent = message;
+  element.classList.remove('hidden');
+  
+  if (type === 'success') {
+    element.classList.add('success-animation');
+    setTimeout(() => element.classList.remove('success-animation'), 600);
+  }
+  
+  if (duration > 0) {
+    setTimeout(() => {
+      element.classList.add('hidden');
+    }, duration);
+  }
+}
 
 export async function signUp() {
   const email = elements.userEmail.value.trim();
@@ -9,10 +27,12 @@ export async function signUp() {
   elements.authMessage.textContent = '';
 
   if (!email || !password) {
-    elements.authMessage.textContent = "Email và mật khẩu không được để trống.";
-    elements.authMessage.classList.remove('hidden');
+    showMessage(elements.authMessage, "Email và mật khẩu không được để trống.", 'error');
     return;
   }
+
+  elements.signupBtn.disabled = true;
+  elements.signupBtn.textContent = '⏳ Đang tạo...';
 
   try {
     const userCred = await firebase.auth().createUserWithEmailAndPassword(email, password);
@@ -21,17 +41,22 @@ export async function signUp() {
     // Check if this is admin - no email verification needed
     if (email === ADMIN_EMAIL) {
       console.log('👑 Admin account - skipping email verification');
-      alert('🎉 Admin account created successfully! You can login immediately.');
+      showMessage(elements.authMessage, '🎉 Admin account created successfully! You can login immediately.', 'success');
     } else {
       await userCred.user.sendEmailVerification();
-      alert('📧 Một email xác thực đã được gửi đến hộp thư của bạn. Vui lòng xác minh trước khi đăng nhập.');
+      showMessage(elements.authMessage, '📧 Tài khoản đã được tạo! Vui lòng kiểm tra email để xác thực trước khi đăng nhập.', 'success', 8000);
     }
 
     await firebase.auth().signOut(); // Đăng xuất ngay
+    elements.userEmail.value = '';
+    elements.userPassword.value = '';
+    
   } catch (e) {
     console.error('❌ Lỗi tạo tài khoản:', e);
-    elements.authMessage.textContent = getFirebaseErrorMessage(e);
-    elements.authMessage.classList.remove('hidden');
+    showMessage(elements.authMessage, getFirebaseErrorMessage(e), 'error');
+  } finally {
+    elements.signupBtn.disabled = false;
+    elements.signupBtn.textContent = '🆕 Tạo tài khoản';
   }
 }
 
@@ -42,10 +67,12 @@ export async function signIn() {
   elements.authMessage.classList.add('hidden');
   
   if (!email || !password) {
-    elements.authMessage.textContent = "Email và mật khẩu không được để trống.";
-    elements.authMessage.classList.remove('hidden');
+    showMessage(elements.authMessage, "Email và mật khẩu không được để trống.", 'error');
     return;
   }
+
+  elements.loginBtn.disabled = true;
+  elements.loginBtn.textContent = '⏳ Đang đăng nhập...';
   
   try {
     const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -59,17 +86,23 @@ export async function signIn() {
       // For regular users, check email verification
       if (!user.emailVerified) {
         await firebase.auth().signOut();
-        elements.authMessage.textContent = '⚠️ Bạn cần xác minh email trước khi đăng nhập.';
-        elements.authMessage.classList.remove('hidden');
+        showMessage(elements.authMessage, '⚠️ Bạn cần xác minh email trước khi đăng nhập. Kiểm tra hộp thư của bạn.', 'warning');
+        
+        // Show resend verification option
+        showResendVerificationOption(email);
         return;
       }
     }
 
     console.log('✅ Đăng nhập thành công:', user.email);
+    showMessage(elements.authMessage, `🎉 Đăng nhập thành công! Chào mừng ${user.displayName || user.email}`, 'success');
+    
   } catch (e) {
     console.error('❌ Lỗi đăng nhập:', e);
-    elements.authMessage.textContent = getFirebaseErrorMessage(e);
-    elements.authMessage.classList.remove('hidden');
+    showMessage(elements.authMessage, getFirebaseErrorMessage(e), 'error');
+  } finally {
+    elements.loginBtn.disabled = false;
+    elements.loginBtn.textContent = '🔐 Đăng nhập';
   }
 }
 
@@ -82,6 +115,148 @@ export async function signOut() {
       alert('Có lỗi khi đăng xuất: ' + getFirebaseErrorMessage(error));
     }
   }
+}
+
+// Forgot Password Functions
+export function showForgotPassword() {
+  const forgotContainer = document.getElementById('forgotPasswordContainer');
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  const resetEmail = document.getElementById('resetEmail');
+  const resetMessage = document.getElementById('resetMessage');
+  
+  if (forgotContainer && forgotLink && resetEmail) {
+    forgotContainer.classList.remove('hidden');
+    forgotLink.style.display = 'none';
+    resetEmail.value = elements.userEmail.value; // Pre-fill if email entered
+    resetEmail.focus();
+    
+    // Clear any previous messages
+    if (resetMessage) resetMessage.classList.add('hidden');
+    elements.authMessage.classList.add('hidden');
+  }
+}
+
+export function hideForgotPassword() {
+  const forgotContainer = document.getElementById('forgotPasswordContainer');
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  const resetEmail = document.getElementById('resetEmail');
+  const resetMessage = document.getElementById('resetMessage');
+  
+  if (forgotContainer && forgotLink) {
+    forgotContainer.classList.add('hidden');
+    forgotLink.style.display = 'inline-block';
+    if (resetEmail) resetEmail.value = '';
+    if (resetMessage) resetMessage.classList.add('hidden');
+  }
+}
+
+export async function sendPasswordReset() {
+  const resetEmail = document.getElementById('resetEmail');
+  const resetMessage = document.getElementById('resetMessage');
+  const sendResetBtn = document.getElementById('sendResetBtn');
+  
+  if (!resetEmail || !resetMessage) {
+    console.error('Reset email elements not found');
+    return;
+  }
+  
+  const email = resetEmail.value.trim();
+  
+  if (!email) {
+    showMessage(resetMessage, 'Vui lòng nhập email cần khôi phục.', 'error');
+    resetEmail.focus();
+    return;
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showMessage(resetMessage, 'Email không hợp lệ. Vui lòng kiểm tra lại.', 'error');
+    resetEmail.focus();
+    return;
+  }
+
+  if (sendResetBtn) {
+    sendResetBtn.disabled = true;
+    sendResetBtn.textContent = '⏳ Đang gửi...';
+  }
+
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    
+    showMessage(resetMessage, 
+      `📧 Email khôi phục đã được gửi đến ${email}. Vui lòng kiểm tra hộp thư (kể cả thư mục spam).`, 
+      'success', 0);
+    
+    // Auto hide form after 3 seconds
+    setTimeout(() => {
+      hideForgotPassword();
+      showMessage(elements.authMessage, 
+        '✅ Đã gửi email khôi phục thành công! Kiểm tra hộp thư của bạn.', 
+        'success', 8000);
+    }, 3000);
+    
+  } catch (error) {
+    console.error('❌ Lỗi gửi email khôi phục:', error);
+    
+    let errorMessage = 'Có lỗi khi gửi email khôi phục: ';
+    switch (error.code) {
+      case 'auth/user-not-found':
+        errorMessage = '❌ Không tìm thấy tài khoản với email này.';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = '❌ Email không hợp lệ.';
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = '❌ Quá nhiều yêu cầu. Vui lòng thử lại sau.';
+        break;
+      default:
+        errorMessage += getFirebaseErrorMessage(error);
+    }
+    
+    showMessage(resetMessage, errorMessage, 'error');
+    
+  } finally {
+    if (sendResetBtn) {
+      sendResetBtn.disabled = false;
+      sendResetBtn.textContent = '📧 Gửi email khôi phục';
+    }
+  }
+}
+
+function showResendVerificationOption(email) {
+  const authMessage = elements.authMessage;
+  const resendContainer = document.createElement('div');
+  resendContainer.style.marginTop = '15px';
+  resendContainer.innerHTML = `
+    <button id="resendVerificationBtn" class="blue" style="padding: 10px 20px; font-size: 0.9rem;">
+      📧 Gửi lại email xác thực
+    </button>
+  `;
+  
+  authMessage.appendChild(resendContainer);
+  
+  const resendBtn = document.getElementById('resendVerificationBtn');
+  resendBtn.addEventListener('click', async () => {
+    resendBtn.disabled = true;
+    resendBtn.textContent = '⏳ Đang gửi...';
+    
+    try {
+      // Sign in temporarily to resend verification
+      const userCred = await firebase.auth().signInWithEmailAndPassword(email, elements.userPassword.value);
+      await userCred.user.sendEmailVerification();
+      await firebase.auth().signOut();
+      
+      showMessage(elements.authMessage, '📧 Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư.', 'success');
+      resendContainer.remove();
+    } catch (error) {
+      console.error('❌ Lỗi gửi lại email xác thực:', error);
+      showMessage(elements.authMessage, 'Lỗi khi gửi lại email: ' + getFirebaseErrorMessage(error), 'error');
+    } finally {
+      resendBtn.disabled = false;
+      resendBtn.textContent = '📧 Gửi lại email xác thực';
+    }
+  });
 }
 
 // Helper function to get user-friendly error messages
@@ -376,8 +551,7 @@ export async function postLoginSetup(user) {
     }
   } catch (error) {
     console.error('❌ Lỗi trong postLoginSetup:', error);
-    elements.authMessage.textContent = 'Có lỗi xảy ra: ' + getFirebaseErrorMessage(error);
-    elements.authMessage.classList.remove('hidden');
+    showMessage(elements.authMessage, 'Có lỗi xảy ra: ' + getFirebaseErrorMessage(error), 'error');
   }
 }
 
@@ -391,6 +565,9 @@ export function resetUIAfterLogout() {
   if (elements.loggedInInfo) elements.loggedInInfo.classList.add("hidden");
   
   if (elements.displayNameContainer) elements.displayNameContainer.classList.add('hidden');
+  
+  // Reset forgot password UI
+  hideForgotPassword();
   
   if (elements.userEmail) elements.userEmail.value = '';
   if (elements.userPassword) elements.userPassword.value = '';
@@ -416,3 +593,5 @@ export function logoutUser() {
     alert('Có lỗi khi đăng xuất: ' + getFirebaseErrorMessage(error));
   });
 }
+
+console.log('🔐 Enhanced auth module loaded with forgot password feature');

@@ -1,4 +1,3 @@
-// admin.js - Clean version focused on date statistics only
 import { auth, db } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState } from './game-state.js';
@@ -25,7 +24,7 @@ export function adminLogout() {
 
   console.log('✅ Admin đăng xuất');
   
-  // Hide admin buttons
+
   const adminButtons = ['adminLogoutBtn', 'deleteBtn', 'loadGroupedBtn'];
   adminButtons.forEach(id => {
     const btn = document.getElementById(id);
@@ -35,13 +34,12 @@ export function adminLogout() {
     }
   });
   
-  // Hide admin data containers
   if (elements.adminHistoryGrouped) {
     elements.adminHistoryGrouped.classList.add('hidden');
     elements.adminHistoryGrouped.style.display = 'none';
   }
   
-  // Hide admin container
+  
   elements.adminLoginContainer.classList.add('hidden');
   
   updateGameState({ isAdminLoggedIn: false });
@@ -49,7 +47,6 @@ export function adminLogout() {
 }
 
 export function deleteAllScores() {
-  // Enhanced confirmation for safety
   const confirmMessage = `⚠️ CẢNH BÁO: Bạn sắp xóa toàn bộ điểm số của tất cả người chơi!
   
 Hành động này KHÔNG THỂ HOÀN TÁC!

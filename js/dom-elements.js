@@ -44,6 +44,4 @@ export const elements = {
   adminGuessesBody: document.getElementById("adminGuessesBody"),
   progressBar: document.getElementById('progressBar'),
   progressTime: document.getElementById('progressTime'),
-
-
 };

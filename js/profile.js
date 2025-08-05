@@ -1,9 +1,9 @@
-// profile.js - User profile management
+
 import { auth, db } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState } from './game-state.js';
 
-// Profile elements
+
 const profileElements = {
   profileBtn: document.getElementById('profileBtn'),
   profileContainer: document.getElementById('profileContainer'),
@@ -13,7 +13,7 @@ const profileElements = {
   profileInfoContent: document.getElementById('profileInfoContent'),
   profileEditContent: document.getElementById('profileEditContent'),
   
-  // Stats elements
+  
   totalGamesPlayed: document.getElementById('totalGamesPlayed'),
   totalScore: document.getElementById('totalScore'),
   bestScore: document.getElementById('bestScore'),
@@ -26,7 +26,7 @@ const profileElements = {
   hardScore: document.getElementById('hardScore'),
   recentGamesBody: document.getElementById('recentGamesBody'),
   
-  // Edit elements
+  
   newDisplayName: document.getElementById('newDisplayName'),
   updateDisplayNameBtn: document.getElementById('updateDisplayNameBtn'),
   newEmail: document.getElementById('newEmail'),
@@ -39,7 +39,7 @@ const profileElements = {
   deleteAccountBtn: document.getElementById('deleteAccountBtn')
 };
 
-// Profile state
+
 let profileData = {
   stats: {
     totalGames: 0,
@@ -86,7 +86,7 @@ async function updateDisplayName() {
   }
   
   try {
-    // Check if name is already taken
+    
     const usernamesRef = db.ref('usernames');
     const snapshot = await usernamesRef.child(newName).once('value');
     
@@ -95,24 +95,24 @@ async function updateDisplayName() {
       return;
     }
     
-    // Update Firebase Auth profile
+    
     await user.updateProfile({ displayName: newName });
     
-    // Update database
+    
     const userRef = db.ref(`users/${user.uid}`);
     await userRef.update({
       displayName: newName,
       lastUpdated: firebase.database.ServerValue.TIMESTAMP
     });
     
-    // Update usernames registry
+    
     const oldName = user.displayName;
     if (oldName && oldName !== newName) {
       await usernamesRef.child(oldName).remove();
     }
     await usernamesRef.child(newName).set(user.uid);
     
-    // Update UI
+    
     const displayElements = document.querySelectorAll('#displayName, #playerNameDisplay');
     displayElements.forEach(el => {
       if (el) el.textContent = newName;
@@ -120,7 +120,7 @@ async function updateDisplayName() {
     
     showMessage('Tên hiển thị đã được cập nhật thành công!', 'success');
     
-    // Reload profile data with new name
+    
     await loadProfileData(user);
     
   } catch (error) {
@@ -133,10 +133,10 @@ async function updateDisplayName() {
     }
   }
 }
-// Initialize profile functionality
 
 
-// Show profile modal
+
+
 async function showProfile() {
   console.log('👤 Opening profile...');
   
@@ -146,7 +146,7 @@ async function showProfile() {
     return;
   }
   
-  // Hide game container, show profile
+  
   if (elements.gameContainer) {
     elements.gameContainer.classList.add('hidden');
   }
@@ -155,29 +155,29 @@ async function showProfile() {
     profileElements.profileContainer.classList.remove('hidden');
   }
   
-  // Load profile data from Firebase
+  
 async function loadProfileData(user) {
   console.log('📊 Loading profile data...');
   
   try {
-    // Load user's scores
+    
     const scoresSnapshot = await db.ref('scores').orderByChild('name').equalTo(user.displayName || user.email.split('@')[0]).once('value');
     const scores = [];
     scoresSnapshot.forEach(child => {
       scores.push(child.val());
     });
     
-    // Load user's guesses for detailed stats
+    
     const guessesSnapshot = await db.ref('guesses').orderByChild('name').equalTo(user.displayName || user.email.split('@')[0]).once('value');
     const guesses = [];
     guessesSnapshot.forEach(child => {
       guesses.push(child.val());
     });
     
-    // Calculate stats
+    
     calculateStats(scores, guesses);
     
-    // Update UI
+    
     updateProfileUI();
     
     console.log('✅ Profile data loaded successfully');
@@ -187,11 +187,11 @@ async function loadProfileData(user) {
   }
 }
 
-// Calculate user statistics
+
 function calculateStats(scores, guesses) {
   console.log(`📈 Calculating stats for ${scores.length} scores and ${guesses.length} guesses`);
   
-  // Reset stats
+  
   profileData.stats = {
     totalGames: 0,
     totalScore: 0,
@@ -204,7 +204,7 @@ function calculateStats(scores, guesses) {
     }
   };
   
-  // Calculate from scores
+  
   scores.forEach(score => {
     profileData.stats.totalScore += score.score || 0;
     profileData.stats.bestScore = Math.max(profileData.stats.bestScore, score.score || 0);
@@ -214,7 +214,7 @@ function calculateStats(scores, guesses) {
     }
   });
   
-  // Calculate from guesses (more detailed info)
+  
   let totalDistance = 0;
   const difficultyCount = { easy: 0, medium: 0, hard: 0 };
   
@@ -231,12 +231,12 @@ function calculateStats(scores, guesses) {
     }
   });
   
-  // Calculate average distance
+  
   profileData.stats.averageDistance = profileData.stats.totalGames > 0 
     ? totalDistance / profileData.stats.totalGames 
     : 0;
   
-  // Get recent games (last 5)
+  
   profileData.recentGames = guesses
     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
     .slice(0, 5);
@@ -244,11 +244,11 @@ function calculateStats(scores, guesses) {
   console.log('✅ Stats calculated:', profileData.stats);
 }
 
-// Update profile UI with calculated data
+
 function updateProfileUI() {
   console.log('🎨 Updating profile UI...');
   
-  // Update main stats
+  
   if (profileElements.totalGamesPlayed) {
     profileElements.totalGamesPlayed.textContent = profileData.stats.totalGames.toLocaleString();
   }
@@ -268,7 +268,7 @@ function updateProfileUI() {
       : avgDist.toFixed(1) + 'km';
   }
   
-  // Update difficulty breakdown
+  
   const difficulties = ['easy', 'medium', 'hard'];
   difficulties.forEach(diff => {
     const gamesEl = profileElements[`${diff}Games`];
@@ -283,13 +283,13 @@ function updateProfileUI() {
     }
   });
   
-  // Update recent games table
+  
   updateRecentGamesTable();
   
   console.log('✅ Profile UI updated');
 }
 
-// Update recent games table
+
 function updateRecentGamesTable() {
   if (!profileElements.recentGamesBody) return;
   
@@ -311,7 +311,7 @@ function updateRecentGamesTable() {
   profileData.recentGames.forEach(game => {
     const row = document.createElement('tr');
     
-    // Format timestamp
+    
     const timestamp = game.timestamp ? new Date(game.timestamp).toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
@@ -319,10 +319,10 @@ function updateRecentGamesTable() {
       minute: '2-digit'
     }) : 'N/A';
     
-    // Format difficulty
+    
     const difficultyBadge = getDifficultyBadge(game.difficulty);
     
-    // Format distance
+    
     const distance = game.distance !== undefined 
       ? (game.distance < 1 ? Math.round(game.distance * 1000) + 'm' : game.distance.toFixed(1) + 'km')
       : 'N/A';
@@ -338,7 +338,7 @@ function updateRecentGamesTable() {
   });
 }
 
-// Get difficulty badge HTML
+
 function getDifficultyBadge(difficulty) {
   const badges = {
     easy: '<span class="badge green" style="font-size: 0.8rem;">🟢 Dễ</span>',
@@ -349,10 +349,10 @@ function getDifficultyBadge(difficulty) {
   return badges[difficulty] || '<span style="opacity: 0.5;">N/A</span>';
 }
 
-// Update display name
 
 
-// Update email
+
+
 async function updateEmail() {
   const newEmailValue = profileElements.newEmail?.value.trim();
   const user = firebase.auth().currentUser;
@@ -387,15 +387,15 @@ async function updateEmail() {
   try {
     await user.updateEmail(newEmailValue);
     
-    // Send verification email
+    
     await user.sendEmailVerification();
     
-    // Update current email display
+    
     if (profileElements.currentEmail) {
       profileElements.currentEmail.textContent = newEmailValue;
     }
     
-    // Clear input
+    
     if (profileElements.newEmail) {
       profileElements.newEmail.value = '';
     }
@@ -429,7 +429,7 @@ async function updateEmail() {
   }
 }
 
-// Update password
+
 async function updatePassword() {
   const currentPass = profileElements.currentPassword?.value;
   const newPass = profileElements.newPassword?.value;
@@ -468,14 +468,14 @@ async function updatePassword() {
   }
   
   try {
-    // Re-authenticate user with current password
+    
     const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
     await user.reauthenticateWithCredential(credential);
     
-    // Update password
+    
     await user.updatePassword(newPass);
     
-    // Clear form
+    
     if (profileElements.currentPassword) profileElements.currentPassword.value = '';
     if (profileElements.newPassword) profileElements.newPassword.value = '';
     if (profileElements.confirmPassword) profileElements.confirmPassword.value = '';
@@ -509,7 +509,7 @@ async function updatePassword() {
   }
 }
 
-// Delete account
+
 async function deleteAccount() {
   const user = firebase.auth().currentUser;
   
@@ -544,22 +544,22 @@ Hành động này sẽ:
     const displayName = user.displayName;
     const uid = user.uid;
     
-    // Delete user data from database
+    
     const userRef = db.ref(`users/${uid}`);
     await userRef.remove();
     
-    // Remove from usernames registry
+    
     if (displayName) {
       const usernamesRef = db.ref('usernames');
       await usernamesRef.child(displayName).remove();
     }
     
-    // Delete Firebase Auth account
+    
     await user.delete();
     
     alert('✅ Tài khoản đã được xóa thành công. Tạm biệt!');
     
-    // Reload page
+    
     window.location.reload();
     
   } catch (error) {
@@ -583,11 +583,11 @@ Hành động này sẽ:
   }
 }
 
-// Show message helper
+
 function showMessage(message, type = 'info', duration = 4000) {
   console.log(`${type.toUpperCase()}: ${message}`);
   
-  // Create message element
+  
   const messageEl = document.createElement('div');
   messageEl.className = `status-${type}`;
   messageEl.textContent = message;
@@ -612,11 +612,11 @@ function showMessage(message, type = 'info', duration = 4000) {
   }, duration);
 }
 
-// Export functions
+
 
 }
 
-// Hide profile modal
+
 function hideProfile() {
   console.log('👤 Closing profile...');
   
@@ -629,11 +629,11 @@ function hideProfile() {
   }
 }
 
-// Switch between profile tabs
+
 function switchTab(tabName) {
   console.log(`🔄 Switching to ${tabName} tab`);
   
-  // Update tab buttons
+  
   const tabs = document.querySelectorAll('[data-tab]');
   tabs.forEach(tab => {
     if (tab.dataset.tab === tabName) {
@@ -643,7 +643,7 @@ function switchTab(tabName) {
     }
   });
   
-  // Update content
+  
   if (tabName === 'info') {
     profileElements.profileInfoContent?.classList.remove('hidden');
     profileElements.profileEditContent?.classList.add('hidden');
@@ -655,7 +655,7 @@ function switchTab(tabName) {
 export function initProfile() {
   console.log('🔧 Initializing profile functionality...');
   
-  // Event listeners
+  
   if (profileElements.profileBtn) {
     profileElements.profileBtn.addEventListener('click', showProfile);
   }
@@ -664,7 +664,7 @@ export function initProfile() {
     profileElements.closeProfileBtn.addEventListener('click', hideProfile);
   }
   
-  // Tab switching
+  
   if (profileElements.profileInfoTab) {
     profileElements.profileInfoTab.addEventListener('click', () => switchTab('info'));
   }
@@ -673,7 +673,7 @@ export function initProfile() {
     profileElements.profileEditTab.addEventListener('click', () => switchTab('edit'));
   }
   
-  // Edit functionality
+  
   if (profileElements.updateDisplayNameBtn) {
     profileElements.updateDisplayNameBtn.addEventListener('click', updateDisplayName);
   }
@@ -692,4 +692,3 @@ export function initProfile() {
   
   console.log('✅ Profile functionality initialized');
 }
-// Load profile

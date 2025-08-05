@@ -1,4 +1,4 @@
-// main.js - Final clean version
+// main.js - Enhanced version with forgot password feature
 import { auth } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState } from './game-state.js';
@@ -10,7 +10,10 @@ import {
   skipDisplayName,
   postLoginSetup, 
   resetUIAfterLogout, 
-  logoutUser 
+  logoutUser,
+  showForgotPassword,
+  hideForgotPassword,
+  sendPasswordReset
 } from './auth.js';
 import { 
   setGameDifficulty, 
@@ -81,6 +84,28 @@ function initAuthListeners() {
     console.log('✅ Skip display name button listener added');
   }
 
+  // Forgot password listeners
+  const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      showForgotPassword();
+    });
+    console.log('✅ Forgot password link listener added');
+  }
+
+  const sendResetBtn = document.getElementById('sendResetBtn');
+  if (sendResetBtn) {
+    sendResetBtn.addEventListener('click', sendPasswordReset);
+    console.log('✅ Send reset button listener added');
+  }
+
+  const cancelResetBtn = document.getElementById('cancelResetBtn');
+  if (cancelResetBtn) {
+    cancelResetBtn.addEventListener('click', hideForgotPassword);
+    console.log('✅ Cancel reset button listener added');
+  }
+
   // Enter key handler for display name input
   if (elements.displayNameInput) {
     elements.displayNameInput.addEventListener('keypress', (e) => {
@@ -105,6 +130,18 @@ function initAuthListeners() {
       console.log(`✅ Auth input ${index + 1} enter key listener added`);
     }
   });
+
+  // Enter key handler for reset email input
+  const resetEmail = document.getElementById('resetEmail');
+  if (resetEmail) {
+    resetEmail.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendPasswordReset();
+      }
+    });
+    console.log('✅ Reset email input enter key listener added');
+  }
 }
 
 // Game event listeners
@@ -243,6 +280,9 @@ window.logoutUser = logoutUser;
 window.adminLogout = adminLogout;
 window.deleteAllScores = deleteAllScores;
 window.loadGroupedGuesses = loadGroupedGuesses;
+window.showForgotPassword = showForgotPassword;
+window.hideForgotPassword = hideForgotPassword;
+window.sendPasswordReset = sendPasswordReset;
 
 // Initialize application
 function initApp() {
@@ -393,4 +433,4 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('❌ Unhandled promise rejection:', e.reason);
 });
 
-console.log('📱 Final Main.js loaded successfully - Clean admin version');
+console.log('📱 Enhanced Main.js loaded successfully with forgot password feature');

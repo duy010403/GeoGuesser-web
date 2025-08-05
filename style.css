@@ -88,6 +88,12 @@ button:active {
   transform: translateY(0);
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Badge Styles */
 .badge { 
   padding: 8px 16px; 
@@ -105,6 +111,7 @@ button:active {
 .red { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; }
 .blue { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
 .purple { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; }
+.gray { background: linear-gradient(135deg, #7f8c8d, #6c7b7d); color: #fff; }
 
 /* Utility Classes */
 .hidden { display: none !important; }
@@ -193,6 +200,76 @@ button:active {
   font-size: 1.1rem;
 }
 
+/* Forgot Password Styles */
+.divider {
+  margin: 25px 0;
+  text-align: center;
+  position: relative;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+}
+
+.divider span {
+  background: #0e7490;
+  padding: 0 15px;
+  color: #95a5a6;
+  font-size: 0.9rem;
+}
+
+.auth-link {
+  color: #06b6d4;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  font-size: 0.95rem;
+  margin-top: 20px;
+  display: inline-block;
+}
+
+.auth-link:hover {
+  color: #67e8f9;
+  text-decoration: underline;
+}
+
+.forgot-password-container {
+  background: rgba(255,255,255,0.06);
+  border-radius: 15px;
+  padding: 30px;
+  margin-top: 30px;
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: slideInDown 0.4s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-animation {
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
 /* Table Styles */
 table { 
   width: 100%; 
@@ -248,6 +325,7 @@ a:hover { color: #67e8f9; }
   border-radius: 8px;
   margin: 15px 0;
   font-weight: 500;
+  text-align: center;
 }
 
 .status-success { background: rgba(46, 204, 113, 0.1); border-left: 4px solid #2ecc71; color: #2ecc71; }
@@ -626,6 +704,43 @@ a:hover { color: #67e8f9; }
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
+.glow-selected {
+  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  z-index: 1;
+}
+
+#progressContainer {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 20px;
+  background-color: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+#progressBar {
+  height: 100%;
+  width: 100%;
+  background-color: orange;
+  transition: width 1s linear;
+}
+
+#progressTime {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: bold;
+  color: black;
+  z-index: 11;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .header h1 {
@@ -664,6 +779,10 @@ a:hover { color: #67e8f9; }
     max-width: 300px;
     min-width: auto;
     flex: none;
+  }
+  
+  .forgot-password-container {
+    padding: 25px 20px;
   }
   
   .difficulty-preview {
@@ -736,6 +855,10 @@ a:hover { color: #67e8f9; }
     padding: 0 15px;
   }
   
+  .forgot-password-container {
+    padding: 20px 15px;
+  }
+  
   .leaderboard-container {
     padding: 20px 10px;
   }
@@ -748,40 +871,3 @@ a:hover { color: #67e8f9; }
     font-size: 1.7rem;
   }
 }
-.glow-selected {
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
-  transform: scale(1.05);
-  z-index: 1;
-}
-
-#progressContainer {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 20px;
-  background-color: #ddd;
-  border-radius: 10px;
-  overflow: hidden;
-  z-index: 10;
-}
-
-#progressBar {
-  height: 100%;
-  width: 100%;
-  background-color: orange;
-  transition: width 1s linear;
-}
-
-#progressTime {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 14px;
-  font-weight: bold;
-  color: black;
-  z-index: 11;
-}
-
