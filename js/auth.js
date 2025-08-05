@@ -216,7 +216,7 @@ export async function saveDisplayName() {
       saveBtn.textContent = '✅ Lưu và tiếp tục';
     }
   }
-}
+
 
 export async function skipDisplayName() {
   const user = firebase.auth().currentUser; // Fixed: Use firebase.auth()
