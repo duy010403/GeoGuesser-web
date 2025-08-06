@@ -15,6 +15,199 @@
       <h1>🌍 GeoGuesser Game</h1>
       <p>Trải nghiệm đoán địa điểm thú vị</p>
     </div>
+
+    <!-- Profile Button - Top Left -->
+    <button id="profileBtn" class="profile-button hidden">
+      👤 Hồ Sơ
+    </button>
+
+    <!-- Profile Modal -->
+    <div id="profileOverlay" class="profile-overlay hidden">
+      <div class="profile-container">
+        <!-- Header -->
+        <div class="profile-header">
+          <button id="closeProfileBtn" class="profile-close">×</button>
+          <div class="profile-avatar">👤</div>
+          <div class="profile-name" id="profileDisplayName">Loading...</div>
+          <div class="profile-email" id="profileEmail">Loading...</div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="profile-tabs">
+          <button class="profile-tab active" data-tab="stats">📊 Thống Kê</button>
+          <button class="profile-tab" data-tab="settings">⚙️ Cài Đặt</button>
+        </div>
+
+        <!-- Content -->
+        <div class="profile-content">
+          <!-- Stats Section -->
+          <div id="statsSection" class="profile-section active">
+            <!-- Overall Stats -->
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span class="stat-icon">🎮</span>
+                <div class="stat-value" id="totalGamesPlayed">0</div>
+                <div class="stat-label">Tổng Lượt Chơi</div>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">💯</span>
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">Tổng Điểm</div>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">🏆</span>
+                <div class="stat-value" id="bestScore">0</div>
+                <div class="stat-label">Điểm Cao Nhất</div>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">📏</span>
+                <div class="stat-value" id="averageDistance">0km</div>
+                <div class="stat-label">KC Trung Bình</div>
+              </div>
+            </div>
+
+            <!-- Difficulty Stats -->
+            <div class="difficulty-stats">
+              <div class="difficulty-card easy">
+                <div class="difficulty-title" style="color: #2ecc71;">🟢 Dễ</div>
+                <div class="difficulty-stats-list">
+                  <div class="difficulty-stat">
+                    <span>Lượt chơi:</span>
+                    <span id="easyGames">0</span>
+                  </div>
+                  <div class="difficulty-stat">
+                    <span>Tổng điểm:</span>
+                    <span id="easyScore">0</span>
+                  </div>
+                  <div class="difficulty-stat">
+                    <span>Trung bình:</span>
+                    <span id="easyAverage">0</span>
+                  </div>
+                </div>
+              </div>
+              <div class="difficulty-card medium">
+                <div class="difficulty-title" style="color: #f1c40f;">🟡 Trung Bình</div>
+                <div class="difficulty-stats-list">
+                  <div class="difficulty-stat">
+                    <span>Lượt chơi:</span>
+                    <span id="mediumGames">0</span>
+                  </div>
+                  <div class="difficulty-stat">
+                    <span>Tổng điểm:</span>
+                    <span id="mediumScore">0</span>
+                  </div>
+                  <div class="difficulty-stat">
+                    <span>Trung bình:</span>
+                    <span id="mediumAverage">0</span>
+                  </div>
+                </div>
+              </div>
+              <div class="difficulty-card hard">
+                <div class="difficulty-title" style="color: #e74c3c;">🔴 Khó</div>
+                <div class="difficulty-stats-list">
+                  <div class="difficulty-stat">
+                    <span>Lượt chơi:</span>
+                    <span id="hardGames">0</span>
+                  </div>
+                  <div class="difficulty-stat">
+                    <span>Tổng điểm:</span>
+                    <span id="hardScore">0</span>
+                  </div>
+                  <div class="difficulty-stat">
+                    <span>Trung bình:</span>
+                    <span id="hardAverage">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Games -->
+            <h3 style="margin-top: 40px; margin-bottom: 20px; color: #06b6d4;">🕒 Lịch Sử Gần Đây</h3>
+            <table class="recent-games-table">
+              <thead>
+                <tr>
+                  <th>Thời Gian</th>
+                  <th>Độ Khó</th>
+                  <th>Điểm</th>
+                  <th>Khoảng Cách</th>
+                </tr>
+              </thead>
+              <tbody id="recentGamesBody">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 30px; opacity: 0.7;">
+                    <div style="font-size: 1.5rem; margin-bottom: 10px;">📊</div>
+                    <div>Đang tải dữ liệu...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Settings Section -->
+          <div id="settingsSection" class="profile-section">
+            <!-- Display Name -->
+            <div class="settings-group">
+              <div class="settings-title">
+                <span>✏️</span>
+                <span>Thay Đổi Tên Hiển Thị</span>
+              </div>
+              <div class="settings-form">
+                <div class="form-group">
+                  <label class="form-label">Tên hiển thị mới</label>
+                  <input type="text" id="newDisplayName" class="form-input" placeholder="Nhập tên hiển thị mới..." maxlength="20">
+                </div>
+                <button id="updateDisplayNameBtn" class="form-button primary">✏️ Cập Nhật Tên</button>
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="settings-group">
+              <div class="settings-title">
+                <span>📧</span>
+                <span>Thay Đổi Email</span>
+              </div>
+              <div class="settings-form">
+                <div class="form-group">
+                  <label class="form-label">Email hiện tại</label>
+                  <input type="email" id="currentEmail" class="form-input" readonly style="opacity: 0.6;">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email mới</label>
+                  <input type="email" id="newEmail" class="form-input" placeholder="Nhập email mới...">
+                </div>
+                <button id="updateEmailBtn" class="form-button primary">📧 Cập Nhật Email</button>
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="settings-group">
+              <div class="settings-title">
+                <span>🔐</span>
+                <span>Thay Đổi Mật Khẩu</span>
+              </div>
+              <div class="settings-form">
+                <div class="form-group">
+                  <label class="form-label">Mật khẩu hiện tại</label>
+                  <input type="password" id="currentPassword" class="form-input" placeholder="Nhập mật khẩu hiện tại...">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Mật khẩu mới</label>
+                  <input type="password" id="newPassword" class="form-input" placeholder="Nhập mật khẩu mới...">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Xác nhận mật khẩu mới</label>
+                  <input type="password" id="confirmPassword" class="form-input" placeholder="Nhập lại mật khẩu mới...">
+                </div>
+                <button id="updatePasswordBtn" class="form-button primary">🔐 Đổi Mật Khẩu</button>
+              </div>
+            </div>
+
+            <!-- VÙNG NGUY HIỂM ĐÃ ĐƯỢC LOẠI BỎ -->
+
+          </div>
+        </div>
+      </div>
+    </div>
     
     <!-- AUTH SECTION -->
     <div id="authContainer" class="card">

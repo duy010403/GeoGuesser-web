@@ -1,4 +1,4 @@
-// main.js - Enhanced version with forgot password feature
+// main.js - Enhanced version with Profile System
 import { auth } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState } from './game-state.js';
@@ -30,6 +30,8 @@ import {
   loadGroupedGuesses,
   loadLeaderboard 
 } from './admin.js';
+// THÊM IMPORT CHO PROFILE SYSTEM
+import { initProfile, showProfileButton, hideProfileButton, refreshProfileData } from './profile.js';
 
 // Global initMap function for Google Maps callback
 window.initMap = () => {
@@ -247,7 +249,7 @@ function initAdminListeners() {
   }
 }
 
-// Auth state change handler
+// Auth state change handler - CẬP NHẬT VỚI PROFILE SYSTEM
 function initAuthStateListener() {
   console.log('🔐 Initializing auth state listener...');
   
@@ -256,11 +258,25 @@ function initAuthStateListener() {
       if (elements.fixedLogoutBtn) {
         elements.fixedLogoutBtn.classList.remove("hidden");
       }
+      
+      // THÊM DÒNG NÀY - Hiện nút Profile khi đăng nhập
+      showProfileButton();
+      
       console.log('🔄 User logged in:', user.email);
       await postLoginSetup(user);
+      
+      // THÊM DÒNG NÀY - Load profile data sau khi login
+      setTimeout(() => {
+        refreshProfileData();
+      }, 1000);
+      
     } else {
       console.log('🚪 User logged out');
       resetUIAfterLogout();
+      
+      // THÊM DÒNG NÀY - Ẩn nút Profile khi đăng xuất
+      hideProfileButton();
+      
       if (elements.fixedLogoutBtn) {
         elements.fixedLogoutBtn.classList.add("hidden");
       }
@@ -285,9 +301,14 @@ window.showForgotPassword = showForgotPassword;
 window.hideForgotPassword = hideForgotPassword;
 window.sendPasswordReset = sendPasswordReset;
 
+// THÊM EXPORTS CHO PROFILE SYSTEM
+window.showProfileButton = showProfileButton;
+window.hideProfileButton = hideProfileButton;
+window.refreshProfileData = refreshProfileData;
+
 // Initialize application
 function initApp() {
-  console.log('🚀 Initializing GeoGuesser application...');
+  console.log('🚀 Initializing GeoGuesser application with Profile System...');
   
   try {
     // Check if Firebase is loaded
@@ -309,9 +330,13 @@ function initApp() {
     initAuthListeners();
     initGameListeners();
     initAdminListeners();
+    
+    // THÊM DÒNG NÀY - Khởi tạo Profile system
+    initProfile();
+    
     initAuthStateListener();
     
-    console.log('✅ Application initialized successfully');
+    console.log('✅ Application with Profile System initialized successfully');
     
     // Wait for Google Maps to be ready before loading leaderboard
     const waitForMapsAndLoadBoard = () => {
@@ -393,9 +418,50 @@ function forceShowAdminElements() {
   });
 }
 
+// Profile debug functions
+function debugProfileElements() {
+  console.log('🔍 DEBUGGING PROFILE ELEMENTS:');
+  
+  const profileElements = [
+    'profileBtn',
+    'profileOverlay',
+    'profileContainer',
+    'profileDisplayName',
+    'profileEmail',
+    'statsSection',
+    'settingsSection'
+  ];
+  
+  profileElements.forEach(id => {
+    const element = document.getElementById(id);
+    console.log(`${element ? '✅' : '❌'} ${id}:`, element);
+    
+    if (element) {
+      console.log(`   - Display: ${getComputedStyle(element).display}`);
+      console.log(`   - Classes: ${element.className}`);
+    }
+  });
+}
+
+function testProfileSystem() {
+  console.log('🧪 TESTING PROFILE SYSTEM:');
+  
+  // Test show profile button
+  showProfileButton();
+  console.log('✅ Profile button shown');
+  
+  // Test profile data refresh
+  setTimeout(() => {
+    refreshProfileData();
+    console.log('✅ Profile data refresh triggered');
+  }, 1000);
+}
+
 // Global debug functions
 window.debugAdminElements = debugAdminElements;
 window.forceShowAdminElements = forceShowAdminElements;
+window.debugProfileElements = debugProfileElements;
+window.testProfileSystem = testProfileSystem;
 
 // Start the application when DOM is loaded
 if (document.readyState === 'loading') {
@@ -403,11 +469,15 @@ if (document.readyState === 'loading') {
     initApp();
     // Debug admin elements
     setTimeout(checkAdminElements, 500);
+    // Debug profile elements
+    setTimeout(debugProfileElements, 600);
   });
 } else {
   initApp();
   // Debug admin elements
   setTimeout(checkAdminElements, 500);
+  // Debug profile elements
+  setTimeout(debugProfileElements, 600);
 }
 
 // Handle page visibility changes
@@ -415,6 +485,13 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && gameState.isAdminLoggedIn) {
     // Refresh admin data when page becomes visible
     loadLeaderboard();
+  }
+  
+  // THÊM DÒNG NÀY - Refresh profile data khi page visible
+  if (!document.hidden && firebase.auth().currentUser) {
+    setTimeout(() => {
+      refreshProfileData();
+    }, 500);
   }
 });
 
@@ -436,4 +513,4 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('❌ Unhandled promise rejection:', e.reason);
 });
 
-console.log('📱 Enhanced Main.js loaded successfully with forgot password feature');
+console.log('📱 Enhanced Main.js loaded successfully with Profile System integration');

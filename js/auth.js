@@ -1,4 +1,4 @@
-// auth.js - Enhanced version with forgot password feature
+// auth.js - Enhanced version with Profile System Integration
 import { auth, db, ADMIN_EMAIL } from './firebase-config.js';
 import { elements } from './dom-elements.js';
 import { gameState, updateGameState, resetGameState } from './game-state.js';
@@ -492,6 +492,15 @@ export async function proceedToGame(user, displayName) {
   const { setGameDifficulty } = await import('./game.js');
   setGameDifficulty('easy');
   
+  // PROFILE SYSTEM INTEGRATION - Show profile button after successful login
+  try {
+    const { showProfileButton } = await import('./profile.js');
+    showProfileButton();
+    console.log('👤 Profile button shown after login');
+  } catch (error) {
+    console.warn('⚠️ Could not load profile module:', error);
+  }
+  
   // Check if user is admin - NO SEPARATE LOGIN NEEDED
   if (user.email === ADMIN_EMAIL) {
     console.log("👑 Admin user detected - enabling admin features automatically");
@@ -545,6 +554,17 @@ export async function postLoginSetup(user) {
     if (hasDisplayName) {
       console.log('✅ User đã có displayName:', hasDisplayName);
       proceedToGame(user, hasDisplayName);
+      
+      // PROFILE SYSTEM INTEGRATION - Load profile data after successful login setup
+      try {
+        const { refreshProfileData } = await import('./profile.js');
+        setTimeout(() => {
+          refreshProfileData();
+          console.log('👤 Profile data refreshed after login');
+        }, 1000);
+      } catch (error) {
+        console.warn('⚠️ Could not refresh profile data:', error);
+      }
     } else {
       console.log('📝 User chưa có displayName, hiển thị form đặt tên');
       showDisplayNameForm();
@@ -582,6 +602,21 @@ export function resetUIAfterLogout() {
   if (gameState.guessMarker) gameState.guessMarker.setMap(null);
   if (gameState.actualMarker) gameState.actualMarker.setMap(null);
   
+  // PROFILE SYSTEM INTEGRATION - Hide profile button after logout
+  try {
+    const { hideProfileButton } = require('./profile.js');
+    hideProfileButton();
+    console.log('👤 Profile button hidden after logout');
+  } catch (error) {
+    // Profile module might not be loaded yet, try with import
+    import('./profile.js').then(({ hideProfileButton }) => {
+      hideProfileButton();
+      console.log('👤 Profile button hidden after logout (async)');
+    }).catch(err => {
+      console.warn('⚠️ Could not hide profile button:', err);
+    });
+  }
+  
   console.log('🔄 UI đã được reset sau đăng xuất');
 }
 
@@ -594,4 +629,4 @@ export function logoutUser() {
   });
 }
 
-console.log('🔐 Enhanced auth module loaded with forgot password feature');
+console.log('🔐 Enhanced auth module loaded with Profile System integration');
